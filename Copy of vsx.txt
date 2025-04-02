@@ -1,0 +1,1968 @@
+﻿AOS-CX 10.15.xxxx Virtual Switching Extension (VSX) Guide 
+5420, 6400, 8xxx, 9300, 10000 Switch Series 
+Published: February 2025 
+Version: 1
+Copyright Information 
+© Copyright 2025 Hewlett Packard Enterprise Development LP. 
+This product includes code licensed under certain open source licenses which require source compliance. The corresponding source for these components is available upon request. This offer is valid to anyone in receipt of this information and shall expire three years following the date of the final distribution of this product version by Hewlett Packard Enterprise Company. To obtain such source code, please check if the code is available in the HPE Software Center at 
+https://myenterpriselicense.hpe.com/cwp-ui/software but, if not, send a written request for specific software version and product for which you want the open source code. Along with the request, please send a check or money order in the amount of US $10.00 to: 
+Hewlett Packard Enterprise Company 
+Attn: General Counsel 
+WW Corporate Headquarters 
+1701 E Mossy Oaks Rd Spring, TX 77389 
+United States of America.
+  
+
+  
+
+| 2 
+Notices 
+The information contained herein is subject to change without notice. The only warranties for Hewlett Packard Enterprise products and services are set forth in the express warranty statements accompanying such products and services. Nothing herein should be construed as constituting an additional warranty. Hewlett Packard Enterprise shall not be liable for technical or editorial errors or omissions contained herein. 
+Confidential computer software. Valid license from Hewlett Packard Enterprise required for possession, use, or copying. Consistent with FAR 12.211 and 12.212, Commercial Computer Software, Computer Software Documentation, and Technical Data for Commercial Items are licensed to the U.S. Government under vendor's standard commercial license. 
+Links to third-party websites take you outside the Hewlett Packard Enterprise website. Hewlett Packard Enterprise has no control over and is not responsible for information outside the Hewlett Packard Enterprise website.
+AOS-CX 10.15.xxxx Virtual Switching Extension (VSX) Guide | (5420, 6400, 8xxx, 9300, 10000 Switch Series) 3 
+Contents 
+About this document 10 Applicable products 10 Latest version available online 10 Command syntax notation conventions 10 About the examples 11 Identifying switch ports and interfaces 12 Identifying modular switch components 13 
+Getting started with VSX 14 Benefits of VSX 14 VSX solution topology overview 15 
+Sample VSX solution topology 15 VSX LAG 16 VSF 16 VSF versus VSX 17 The common system MAC address 17 
+VSX solution requirements 18 VSX components 18 Inter-Switch Link (ISL) 19 
+ISL configurations 20 Switch roles 21 VSX switch reboot 22 Periodic synchronization 22 BFD and VSX support 23 
+Upgrading to the latest version of VSX 24 Upgrading VSX from 10.12 or later to 10.15 24 Upgrading switches by using the vsx update-software command 25 
+Setting up the VSX environment 27 VSX in the core layer 27 Configuring core 1 and core 2 for VSX 28 Configuring the two aggregate VSX switches 31 Configuring an AOS-CX switch as an access switch 35 
+Enabling VSX configuration synchronization 38 VSX configuration synchronization 38 Features supporting VSX 38 VSX synchronization requirements 38 Enabling VSX synchronization at the global level 39 Enabling VSX synchronization at the context level 45 Enabling VSX synchronization of STP configurations between VSX peer switches 48 
+Monitoring the VSX environment 50 Ways to view the status of VSX 50 Consistency checking between VSX switches 50 Viewing the show commands for both VSX switches from one switch 50 
+AOS-CX 10.15.xxxx Virtual Switching Extension (VSX) Guide | (5420, 6400, 8xxx, 9300, 10000 Switch Series) 5
+Preventing traffic loss 52 Link-up delay 52 The link-up delay timer during an ISL failure 53 Split brain scenario 55 Keepalive 56 Keepalive response in ISL failure scenarios 57 Keepalive scenario 57 Keepalive configurations 58 Recommended network configuration for keepalive 59 Active gateway and active forwarding 61 Active-active layer 2 61 Layer 2 configuration 61 Active-active layer 3 default gateway 62 Active gateway over VSX 62 VMACs and active gateway 63 Requirements 63 Example of IPv4 and IPv6 active gateways on an SVI 64 IP multinetting over VSX 65 Active gateway configurations 66 VRRP with VSX configuration 66 Active forwarding 67 Active forwarding requirements 67 Traffic flow scenario 68 Sample Active forwarding configuration 68 Deployment options for upstream connectivity with active-active forwarding 68 Benefits of active forwarding and active gateway 68 Virtual active gateway 69 Supported services on a virtual active gateway SVI 69 Unsupported services for a virtual active gateway SVI 70 Sample virtual active gateway configuration 70 Active-standby DHCP relay 71 DHCP relay failure if the SVI is down on the primary switch 71 Split recovery mode 71 VSX shutdown-on-split 72 IGMP snooping 72 DHCP relay backup 73 IP multicast routing 74 Recommended values for system MAC and active gateway VMAC 75 
+STP over VSX 77 Supported STP modes 77 How STP works with VSX 77 MSTP 78 
+MSTP configurations 79 VSX at the distribution layer with MSTP enabled 79 Distribution VSX pair connected to the core switch (SVI solution) 81 Sample configurations for MSTP on VSX 82 VSX and MSTP loop-protect configurations (physical and logical views) 85 
+Show commands for MSTP 86 MSTP with VSX guidelines 87 RPVST 87 Sample RPVST configuration with VSX 88 VSX switch with RPVST, as root and nonroot 90 Configuring a VSX switch as root for one or more RPVST instances 92 Show commands for RPVST 92 How the Multi-Chassis role works 93
+| 6 
+RPVST with VSX guidelines 95 
+Loop protect configurations over VSX 96 How loop protect works over VSX 96 Setting up loop protect over VSX 100 An example configuration of loop protect over VSX 100 
+VSX configurations before enabling loop protect 101 VSX primary switch before enabling loop protect 101 VSX secondary switch before enabling loop protect 102 Downstream switch before enabling loop protect 104 
+VSX configurations after enabling loop protect 105 VSX primary switch after enabling loop protect 105 VSX secondary after before enabling loop protect 106 Downstream switch after enabling loop protect 107 Best practices for loop protect over VSX 107 
+EVPN VSX support 108 
+Upstream connectivity 109 Upstream connectivity options 109 Upstream routing over VSX LAG SVI links 111 
+VSX commands 115 active-gateway (VSX) 115 config-sync disable 121 inter-switch-link {<PORT-NUM> | lag <LAG-ID>} 122 inter-switch-link dead-interval 124 inter-switch-link hello-interval 125 inter-switch-link hold-time 126 inter-switch-link peer-detect-interval 127 interface lag multi-chassis 128 ip icmp redirect (VSX) 130 keepalive dead-interval 131 keepalive hello-interval 132 keepalive peer 133 keepalive udp-port 135 lacp fallback 136 linkup-delay-timer 137 linkup-delay-timer exclude lag-list 139 neighbor <IP-ADDRESS> vsx-sync-exclude 140 role {primary | secondary} 141 show active-gateway 142 show active-gateway <IFNAME> 144 show interface <VLAN-NAME> 145 show lacp aggregates (VSX) 147 show lacp interfaces (vsx) 148 show lacp interfaces multi-chassis 151 show running-config interface 153 show running-config vsx 154 show running-config vsx-sync 155 show running-config vsx-sync peer-diff 156 show system l2-vlan-mac-mode 157 show vsx active-forwarding 158 show vsx brief 159 show vsx config-consistency 161 show vsx config-consistency lacp 163
+AOS-CX 10.15.xxxx Virtual Switching Extension (VSX) Guide | (5420, 6400, 8xxx, 9300, 10000 Switch Series) 7 
+show vsx configuration 165 show vsx configuration split-recovery 166 show vsx ip data-path 167 show vsx ip route 169 show vsx ipv6 data-path 171 show vsx ipv6 route 173 show vsx status 175 show vsx status config-sync 179 show vsx status peering 180 show vsx status shutdown-on-split 181 split recovery 182 system l2-vlan-mac-mode 183 system-mac 184 vsx 186 vsx active-forwarding 187 vsx shutdown-on-split 188 vsx-sync 189 vsx-sync (config-if, config-lag-if contexts) 193 vsx-sync (config-vlan-if context) 198 vsx-sync aaa 199 vsx-sync acl-log-timer 200 vsx-sync acl-secure-update 201 vsx-sync arp-security 204 vsx-sync bfd-global 206 vsx-sync bgp 207 vsx-sync copp-policy 208 vsx-sync dcb-global 209 vsx-sync dhcp-relay 210 vsx-sync dhcp-server 212 vsx-sync dhcpv6-server 213 vsx-sync dns 214 vsx-sync dhcp-snooping 215 vsx-sync evpn 216 vsx-sync icmp-tcp 217 vsx-sync keychain 218 vsx-sync lldp 219 vsx-sync loop-protect-global 220 vsx-sync mac-lockout 221 vsx-sync mclag-interfaces 222 vsx-sync nd-snooping 224 vsx-sync neighbor 225 vsx-sync ospf 226 vsx-sync policy-global 228 vsx-sync port-access 229 vsx-sync private-vlan-global 230 vsx-sync ptp-global 231 vsx-sync qos-global 232 vsx-sync route-map 233 vsx-sync sflow 234 vsx-sync sflow-global 235 vsx-sync snmp 236 vsx-sync ssh 237 vsx-sync static-routes 238 vsx-sync stp-global 239 vsx-sync telnet 240 vsx-sync time 241
+| 8 
+vsx-sync udp-forwarder 242 vsx-sync vrrp 243 vsx-sync vsx-global 245 vsx update-software 246 vsx update-software boot-bank 248 
+Configuration conflict finder recommendations 250 Sample recommendations 251 
+Troubleshooting 253 ISL is out-of-sync 253 Solution 1 253 Solution 2 254 Solution 3 254 ISL is in blocking state 254 Traffic drop on a VSX LAG interface 256 Traffic loss after the ISL has been out-of-sync and keepalive is down 257 Failure scenarios and split recovery 257 Active gateway is unreachable 258 BFD reports a LAG as down even when healthy links are still available 259 
+Support and Other Resources 261 Accessing HPE Aruba Networking Support 261 Accessing Updates 262 Warranty Information 262 Regulatory Information 262 Documentation Feedback 262
+AOS-CX 10.15.xxxx Virtual Switching Extension (VSX) Guide | (5420, 6400, 8xxx, 9300, 10000 Switch Series) 9 
+Chapter 1 
+About this document 
+About this document 
+This document describes features of the AOS-CX network operating system. It is intended for administrators responsible for installing, configuring, and managing HPE Aruba Networking switches on a network. 
+Applicable products 
+This document applies to the following products: 
+■ HPE Aruba Networking 5420 Switch Series (S0U67A, S0U55A, S0U63A, S0U64A, S0U65A, S0U75A, S0U72A, S0U78A, S0U58A, S0U73A, S0U74A, S0U71A, S0U76A, S0U70A, S0U77A, S0U60A, S0U61A, S0U62A, S0U66A, S0U68A) 
+■ HPE Aruba Networking 6400 Switch Series (R0X31A, R0X38B, R0X38C, R0X39B, R0X39C, R0X40B, R0X40C, R0X41A, R0X41C, R0X42A, R0X42C, R0X43A, R0X43C, R0X44A, R0X44C, R0X45A, R0X45C, R0X26A, R0X27A, JL741A, S0E48A,S0E48A #0D1, S1T83A, S1T83A #0D1) 
+■ HPE Aruba Networking 8100 Switch Series (R9W94A, R9W95A, R9W96A, R9W97A) 
+■ HPE Aruba Networking 8320 Switch Series (JL479A, JL579A, JL581A) 
+■ HPE Aruba Networking 8325 Switch Series (JL624A, JL625A, JL626A, JL627A) 
+■ HPE Aruba Networking 8325H Switch Series (S4B20A, S4B21A, S4B22A, S4B23A, S2T42A, S2T46A, S2T47A, S2T48A) 
+■ HPE Aruba Networking 8325P Switch Series (S0G12A, S4A48A) 
+■ HPE Aruba Networking 8360 Switch Series (JL700A, JL701A, JL702A, JL703A, JL706A, JL707A, JL708A, JL709A, JL710A, JL711A, JL700C, JL701C, JL702C, JL703C, JL706C, JL707C, JL708C, JL709C, JL710C, JL711C, JL704C, JL705C, JL719C, JL718C, JL717C, JL720C, JL722C, JL721C ) 
+■ HPE Aruba Networking 8400 Switch Series (JL366A, JL363A, JL687A) 
+■ HPE Aruba Networking 9300 Switch Series (R9A29A, R9A30A, R8Z96A, S0F81A, S0F82A, S0F83A, S0F84A, S0F85A, S0F86A, S0F87A, S0F88A, S0F95A, S0F96A) 
+■ HPE Aruba Networking 10000 Switch Series (R8P13A, R8P14A) 
+Latest version available online 
+Updates to this document can occur after initial publication. For the latest versions of product documentation, see the links provided in Support and Other Resources. 
+Command syntax notation conventions 
+Convention Usage 
+example-text Identifies commands and their options and operands, code examples, filenames, pathnames, and output displayed in a command window. Items 
+that appear like the example text in the previous column are to be entered 
+AOS-CX 10.15.xxxx Virtual Switching Extension (VSX) Guide | (5420, 6400, 8xxx, 9300, 10000 Switch Series) 10
+Convention Usage 
+exactly as shown and are required unless enclosed in brackets ([ ]). 
+example-text In code and screen examples, indicates text entered by a user.
+	Any of the following: 
+Identifies a placeholder—such as a parameter or a variable—that you must 
+substitute with an actual value in a command or in code: 
+■ <example-text> 
+■ <example-text> 
+■ For output formats where italic text cannot be displayed, variables 
+■ example-text 
+are enclosed in angle brackets (< >). Substitute the text—including 
+■ example-text 
+the enclosing angle brackets—with an actual value. 
+■ For output formats where italic text can be displayed, variables 
+might or might not be enclosed in angle brackets. Substitute the 
+text including the enclosing angle brackets, if any, with an actual 
+value.
+	| Vertical bar. A logical OR that separates multiple items from which you can choose only one. 
+Any spaces that are on either side of the vertical bar are included for 
+readability and are not a required part of the command syntax.
+	{ } Braces. Indicates that at least one of the enclosed items is required.
+	[ ] Brackets. Indicates that the enclosed item or items are optional.
+	… or 
+Ellipsis: 
+■ In code and screen examples, a vertical or horizontal ellipsis indicates an 
+... 
+omission of information. 
+■ In syntax using brackets and braces, an ellipsis indicates items that can be 
+repeated. When an item followed by ellipses is enclosed in brackets, zero 
+or more items can be specified.
+	
+
+
+
+About the examples 
+Examples in this document are representative and might not match your particular switch or environment. 
+The slot and port numbers in this document are for illustration only and might be unavailable on your switch. 
+Understanding the CLI prompts 
+When illustrating the prompts in the command line interface (CLI), this document uses the generic term switch, instead of the host name of the switch. For example: 
+switch> 
+The CLI prompt indicates the current command context. For example: 
+switch> 
+Indicates the operator command context. 
+switch# 
+Indicates the manager command context. 
+switch(CONTEXT-NAME)# 
+Indicates the configuration context for a feature. For example: 
+switch(config-if)#
+About this document | 11 
+Identifies the interface context. 
+Variable information in CLI prompts 
+In certain configuration contexts, the prompt may include variable information. For example, when in the VLAN configuration context, a VLAN number appears in the prompt: 
+switch(config-vlan-100)# 
+When referring to this context, this document uses the syntax: 
+switch(config-vlan-<VLAN-ID>)# 
+Where <VLAN-ID> is a variable representing the VLAN number. 
+Identifying switch ports and interfaces 
+Physical ports on the switch and their corresponding logical software interfaces are identified using the format: member/slot/port. 
+On the HPE Aruba Networking 6400 and 5420 Switch Series 
+■ member: Always 1. VSF is not supported on this switch. 
+■ slot: Specifies physical location of a module in the switch chassis. 
+o Management modules are on the front of the switch in slots 1/1 and 1/2. 
+o Line modules are on the front of the switch starting in slot 1/3. 
+■ port: Physical number of a port on a line module. 
+For example, the logical interface 1/3/4 in software is associated with physical port 4 in slot 3 on member 1. 
+On the HPE Aruba Networking 8xxx, 9300/9300S, and 10000 Switch Series 
+■ member: Always 1. VSF is not supported on this switch. 
+■ slot: Always 1. This is not a modular switch, so there are no slots. 
+■ port: Physical number of a port on the switch. 
+For example, the logical interface 1/1/4 in software is associated with physical port 4 on the switch. 
+If using breakout cables, the port designation changes to x:y, where x is the physical port and y is the lane when split. For example, the logical interface 1/1/4:2 in software is associated with lane 2 on physical port 4 in slot 1 on member 1.   
+On the HPE Aruba Networking 8400 Switch Series 
+■ member: Always 1. VSF is not supported on this switch. 
+■ slot: Specifies physical location of a module in the switch chassis. 
+o Management modules are on the front of the switch in slots 1/5 and 1/6. 
+o Line modules are on the front of the switch in slots 1/1 through 1/4, and 1/7 through 1/10. ■ port: Physical number of a port on a line module 
+For example, the logical interface 1/1/4 in software is associated with physical port 4 in slot 1 on member 1.
+AOS-CX 10.15.xxxx Virtual Switching Extension (VSX) Guide | (5420, 6400, 8xxx, 9300, 10000 Switch Series) 12 
+Identifying modular switch components 
+■ Power supplies are on the front of the switch behind the bezel above the management modules. Power supplies are labeled in software in the format: member/power supply: o member: 1. 
+o power supply: 1 to 4. 
+■ Fans are on the rear of the switch and are labeled in software as: member/tray/fan: o member: 1. 
+o tray: 1 to 4. 
+o fan: 1 to 4. 
+■ Fabric modules are not labeled on the switch but are labeled in software in the format: member/module: 
+o member: 1. 
+o member: 1 or 2. 
+■ The display module on the rear of the switch is not labeled with a member or slot number.
+About this document | 13 
+Chapter 2 
+Getting started with VSX 
+Getting started with VSX 
+HPE Aruba Networking Virtual Switching Extension (VSX) is virtualization technology for aggregation/core switches running the AOS-CX operating system. This solution lets the switches present as one virtualized switch in critical areas. Configuration synchronization is one aspect of this VSX solution where the primary switch configuration is synced to the secondary switch. This solution allows for a pseudo single plane of glass configuration and helps keep key configuration pieces in synchronization as operational changes are made. Since the solution is primarily for high availability, it is expected that most of the configuration policy is the same across both peers. 
+VSX virtualizes the control plane of two aggregation switches to function as one device at layer 2 and as independent devices at layer 3. From a datapath perspective, each device does an independent forwarding lookup to decide how to handle traffic. Some of the forwarding databases, such as the MAC and ARP tables, are synchronized between the two devices using a proprietary VSX control plane. Some of the forwarding databases are built independently by each switch. 
+Benefits of VSX 
+VSX has similar benefits as Virtual Switching Framework (VSF), however, VSX also offers better high availability required in core and data center environments. VSX binds two AOS-CX switches of the same model type to operate as one device for layer 2. VSX also operates as independent nodes for layer 3. 
+■ Control plane: 
+o Dual control plane for better resiliency 
+o Unified management (synchronized configuration and easy troubleshooting) 
+o Live software upgrade with near zero downtime 
+o In-chassis redundancy for the 8400 series switches and device level redundancy for all other platforms, such as for the 832x and 6400 series switches. 
+■ Layer 2 distributed LAGs (aggregation switches to access switches): 
+o Loop-free L2 multipathing (active-active) 
+o Rapid failover 
+o Simple configuration 
+o No Spanning Tree Required 
+■ Layer 3 distributed LAGs (core switches to aggregate switches) 
+o Distributed Layer 3 over VSX pair (various options: Routed Only Ports (ROPs), Switched Virtual Interfaces (SVIs), or LAG SVIs) 
+o Unified datapath (active-active first hop gateway) 
+o Layer 3 ECMP + Layer 2 VSX LAG (highly fault tolerant) with active-forwarding 
+■ Active Gateway: 
+o Active-Active first hop gateway (VIP) 
+o No VRRP/HSRP 
+o Simple configuration (one command) 
+AOS-CX 10.15.xxxx Virtual Switching Extension (VSX) Guide | (5420, 6400, 8xxx, 9300, 10000 Switch Series) 14
+o No gateway protocol overhead 
+o DHCP relay redundancy 
+o IP multinetting support 
+VSX solution topology overview 
+■ Active gateway support: Active gateways can be configured for active-active routing. VRRP can be used, as an alternative, for active-standby routing. 
+■ ISL links assigned to higher bandwidth: An ISL link has a higher bandwidth compared to VSX links. When planning the topology, consider sizing the ISL link according to the traffic volume required for the east-west traffic of a single-homed VSX during a failover scenario. 
+■ Increasing resiliency: When creating a LAG with multiple ports on each chassis-based switch, it is a best practice to create the LAG with members from multiple line cards. This technique increases the points of resiliency. 
+■ Same VLAN configurations: Both VSX switches have the same VLAN configurations. Make sure that no topology loop is formed because an ISL is added as a member to all the VLANs by default. You can make configuration synchronization automatic between the VSX switches by enabling VSX synchronization. 
+■ Upstream device from VSX switches: Connections to the upstream device from the VSX switches have sufficient bandwidth to handle traffic from all VSXs. 
+Core-1 and Core-2, shown in the following figure, can be third-party devices, as long as they support LACP for downstream connectivity to the VSX LAG. VSX Synchronization syncs from the primary switch (shown as Agg-1 in the following diagram) to the secondary switch (shown as Agg-2 in the following diagram).   
+To configure Core-1 and Core-2 with AOS-CX, see Configuring core 1 and core 2 for VSX. To configure the aggregate 1 and aggregate 2, see Configuring the two aggregate VSX switches. To configure the access switch, see Configuring an AOS-CX switch as an access switch. After setting up the VSX topology, see Enabling VSX configuration synchronization. VSX synchronization can be enabled globally for some features, and VSX synchronization can be enabled at the context level for other features. 
+Sample VSX solution topology
+Getting started with VSX | 15 
+  
+VSX LAG 
+VSX LAGs span both aggregation switches. The two switches appear as one device to partner downstream or upstream devices or both when forming a LAG with the VSX pair. The two switches synchronize their databases and states over a user configured link referred to as an Inter-Switch Link (ISL). 
+VSX LAGs are preferable to point-to-point transit VLANs for upstream connectivity when the routed only port is not an option, such with the case of multiple VRFs. This configuration reduces the number of transit VLANs and associated SVIs, simplifying operations and troubleshooting. Enable active forwarding and active gateway to further optimize the traffic path. When you enable active forwarding and active gateway, north-south and south-north traffic bypasses the ISL link. 
+VSF 
+Virtual Switching Framework (VSF) technology virtualizes multiple physical devices into one virtual fabric which provides high availability because of the significant reduction in recovery time simplified network design and management. VSF is ideal for campus access. VSF lets supported switches connected to each other through Ethernet connections (copper or fiber) to behave like a single chassis switch.
+AOS-CX 10.15.xxxx Virtual Switching Extension (VSX) Guide | (5420, 6400, 8xxx, 9300, 10000 Switch Series) 16 
+  
+
+VSF versus VSX 
+VSF VSX 
+Single control plane Dual control plane 
+Single management plane with commander pushing 
+Dual management plane with "opt-in" configuration 
+configuration on all members 
+synchronization
+	Dual port state: Enabled Default port state: Disabled
+	Layer 2 ports Layer 3 ports
+	Ideal for campus access Ideal for campus agg/core
+	
+
+
+
+The common system MAC address 
+The common system MAC address is used for preventing traffic disruptions when the primary switch is restored after the secondary switch. A primary switch might be restored after the secondary switch in scenarios, such as: 
+■ A primary switch hardware replacement. 
+■ A power outage with the primary switch restored after the secondary switch is restored. 
+When the primary switch is restored after the secondary switch, a traffic disruption might occur when the ISL starts to sync because the MAC system address changes from the secondary switch to the primary switch for the LACP. To avoid the traffic disruption, set the common system MAC address by entering the system-mac <MAC-ADDR> command. This command creates a common system MAC address between the two VSX switches. This common system MAC address prevents a traffic disruption
+Getting started with VSX | 17 
+when the secondary switch comes up before the primary switch. If the common system MAC access is enabled, the secondary switch uses the common system MAC address instead of its own system MAC address, which prevents a traffic loss. 
+The system MAC address also maintains the same MSTP bridge ID across VSX switches, which act as a single switch. 
+VSX solution requirements 
+■ All VSX switches in an environment must have identical settings for the following: o The VLAN membership for all VSX trunk ports. 
+o The loop protection configuration on a VLAN that is part of a VSX LAG. 
+■ Available ports: Make sure that the VSX LAG interface on both the VSX primary and secondary switches has a member port configured and enabled. Make sure that you also have a non-VSX port that is available for the ISL. 
+■ Mutually exclusive features: 
+o VSX active-forwarding and VSX active-gateway on the same VLAN interface 
+o VSX active-gateway and VRRP at SVI context 
+o VSX and MVRP 
+  
+VSX active-gateway and VRRP can co-exist at global level 
+■ Profiles for 832x series switches: All switches must be assigned either in profile L3-agg or L3-core. ■ Support for Inter-Switch links (ISLs): VSX LAG does not support layer 3 processing, such as a routed port; however, multiple Virtual Switch Interfaces (VSI) can be configured on the switch in association with the VLANs carried over the given VSX LAG. 
+■ Support for Layer 3: VSX LAG as a route only port is not supported. To enable Layer 3, create an SVI associated to a given VLAN that is enabled on the VSX LAG. 
+■ VLAN support: The same list of VLANs that are trunked over the VSX LAGs must be configured on the primary and secondary VSX switches in the global configuration. The list of VLANs can be synced to the secondary switch if the vsx-sync command is used in the VLAN context. Also verify that the VLAN set is also permitted on the ISL on the primary and secondary VSX switches. To configure VLAN trunking on the ISL, enter the vlan trunk allowed [<VLAN-LIST> | all] command. If a native VLAN is defined, the switch automatically runs the vlan trunk allowed all command to ensure that the default VLAN is allowed on the trunk. To allow only specific VLANs on the trunk, enter the vlan trunk allowed <VLAN-LIST> command, for example: vlan trunk allowed 2,3,4 
+For steps about creating the ISL within a VSX LAG, see Configuring the two aggregate VSX switches. ■ VSX active-forwarding, VSX active-gateway, and VSX LAG are supported with BFD. ■ VSX switches and software versions: Both VSX peer switches must use the same software version 
+in most situations; however during an upgrade, one switch can run a different version than the peer with some limitations, such as no VSX synchronization support. 
+VSX components 
+VSX has the following components:
+AOS-CX 10.15.xxxx Virtual Switching Extension (VSX) Guide | (5420, 6400, 8xxx, 9300, 10000 Switch Series) 18 
+■ Active-standby DHCP server 
+■ Common system MAC address 
+■ DHCP forwarder redundancy 
+■ Inter-Switch Link (ISL) 
+■ IGMP snooping 
+■ Keepalive 
+■ Multiple Spanning Tree Protocol (MSTP) 
+■ Split recovery mode 
+■ Switch roles 
+Inter-Switch Link (ISL) 
+In the VSX solution topology, an Inter-Switch Link (ISL) is a layer 2 interface between two VSX peer switches. Each VSX switch must be configured with an ISL link connected to its peer VSX switch. It is recommended that this link is peer-to-peer and used for both datapath traffic forwarding and control path VSX protocol exchange. The ISL interface is by default a member of all VLANs on the device. You can change ISL membership through the command line, but you must ensure VLANs that contain VSX LAG members are not excluded from the ISL. 
+In the datapath, traffic is forwarded natively with no additional encapsulation, unlike VSF. ISL is capable of sending control path data, which requires oversize packets. The ISL MTU is automatically set to the required size to accommodate oversize packets, and cannot be manually overwritten to avoid generating an unintended outage. The token counters of ISL interface show this oversize control path data as part of the ISL operation. The ISL link is the main pipeline for synchronizing data, such as from the following components, during VSX stack join and also permanently between VSX peers: 
+■ ARP table 
+■ LACP states for VSX LAGs 
+■ MAC table 
+■ MSTP states 
+The ISL uses version control and provides backward compatibility regarding VSX synchronization capabilities. 
+The ISL can span long distances (transceiver dependent). The traffic that passes over VSX links has no additional encapsulation. 
+All ISL ports must have the same speed. The speed can be 10G, 25G, 40G, 50G or 100G, with 40G and 100G being the preferred speeds. For example: 2x40G. 
+Only R0X39A/C - R0X43A/C uplink ports support 50G DAC.   
+A 8100 Switch series can only configured as a VSX peer with another 8100 Switch series.   
+When you convert any layer 2 interface to be part of an ISL lag, the MTU value of the interface changes to 9198 or 9500, depending on the switch platform. The show running-config or show running-config
+Getting started with VSX | 19 
+all commands do not display this changed MTU value. For example, if you configure the interface with the MTU value of 5000 and convert the interface to be part of an ISL lag, the MTU value changes from 5000 to 9198 or 9500. For more information, see Applied interface MTU Value and the corresponding platforms. 
+The show running-config or show running-config all commands display the MTU value as 5000. If you want to view the actual MTU value of the ISL interface, execute the show interface <Interface-ID> command. 
+Table 1: Applied interface MTU Value and the corresponding platforms 
+Interface MTU Value Platforms 
+9198 ■ 8320 
+■ 8325 
+■ 8400 
+■ 9300 
+■ 10000 
+9500 ■ 8100 
+■ 8360 
+■ 6400
+	
+
+
+
+  
+It is recommended to use the default LACP timer on the ISL lag (30s for lacp rate slow). Sample show running-config snippet 
+interface 1/1/1 
+no shutdown 
+mtu 5000 
+description VSX-ISL 
+lag 256 
+Sample show interface snippet 
+interface 1/1/1 is up 
+Admin state is up 
+Link state: up for 1 minute (since Mon Apr 05 07:25:14 UTC 2021) 
+Link transitions: 9 
+Description: 
+Hardware: Ethernet, MAC Address: 54:80:28:fd:78:fd 
+MTU 9198 
+Type SFP+DAC3 
+Full-duplex 
+qos trust none 
+Speed 10000 Mb/s 
+Auto-negotiation is off 
+Flow-control: off 
+Error-control: off 
+ISL configurations
+AOS-CX 10.15.xxxx Virtual Switching Extension (VSX) Guide | (5420, 6400, 8xxx, 9300, 10000 Switch Series) 20 
+Task Command Example 
+Configuring an ISL port. inter-switch-link switch(config)# vsx switch(config-vsx)# inter-switch 
+link lag 100 
+Deleting an ISL port. no inter-switch-link switch(config)# vsx switch(config-vsx)# no inter 
+switch-link
+	Configuring ISL dead interval. inter-switch-link dead 
+switch(config)# vsx 
+interval <DEAD-INTERVAL> 
+switch(config-vsx)# inter-switch 
+link dead-interval 10
+	Restore default ISL dead 
+no inter-switch-link 
+switch(config)# vsx 
+interval. 
+dead-interval 
+switch(config-vsx)# no inter 
+switch-link dead-interval
+	Configuring the ISL hello 
+inter-switch-link hello 
+switch(config)# vsx 
+interval. 
+interval 
+switch(config-vsx)# inter-switch 
+link hello-interval 3
+	Restoring default ISL hello 
+no inter-switch-link 
+switch(config)# vsx 
+interval. 
+hello-interval 
+switch(config-vsx)# no inter 
+switch-link hello-interval
+	Configuring ISL holdtime. inter-switch-link hold 
+switch(config)# vsx 
+time 
+switch(config-vsx)# inter-switch 
+link hold-time 2
+	Restoring default ISL holdtime. no inter-switch-link 
+switch(config)# vsx 
+hold-time 
+switch(config-vsx)# no inter 
+switch-link hold-time
+	Configuring the amount of time 
+inter-switch-link peer 
+switch(config)# vsx 
+in seconds that the device waits 
+detect-interval 
+switch(config-vsx)# inter-switch 
+for the ISL interface to link up 
+link peer-detect-interval 180
+after a reboot. 
+	
+
+
+
+Default values: 
+■ Dead interval: 20 seconds 
+■ Hello interval: 1 second 
+■ Hold time: 0 seconds 
+■ Peer detect interval: 300 seconds 
+Switch roles 
+Each VSX switch must be configured with a role – primary or secondary. The roles do not indicate which device is forwarding traffic at a given time as VSX is an active-active forwarding solution. The roles are used to determine which device stays active when there is a VSX split, such as when the ISL goes down, and for determining the direction of configuration-sync. If the VSX ISL goes down, the primary switch keeps forwarding traffic while the secondary switch blocks ports from participating in the VSX LAGs.
+Getting started with VSX | 21 
+VSX switch reboot 
+After a VSX switch reboots, it has no entries for ARP, MAC, and routes. If downstream VSX LAG ports are activated before all this information is relearned, traffic is dropped. To avoid a traffic drop, VSX LAGs on the rebooted switch stay down until the restoration of LACP, MAC, ARP databases, and MSTP states if MSTP is used. 
+The learning process for the VSX LAGs has two phases: 
+■ Initial sync phase: The LACP states, MAC address table, ARP table, and potentially MSTP states are downloaded from the forwarding switch to the freshly rebooted switch. 
+■ Link-up delay phase: The downloaded entries are installed into the ASIC. Router adjacencies with core nodes and learned upstream routes are also established. 
+The link-up delay phase is configurable with the linkup-delay-timer <DELAY-TIMER> command. The default value is 180 seconds. Set the link-up delay timer to the maximum value of 600 seconds for a network with many MAC addresses, a large ARP table, or a large routing table. 
+When both VSX switches reboot, the link-up delay timer is not used because both switches are trying to relearn the LACP states, MAC address table, and ARP table. 
+To get upstream router adjacencies established during the link-up delay, the upstream LAGs have to be excluded from the scope of the link-up delay. Run the linkup-delay-timer exclude lag-list <LAG-LIST> for identifying the LAGs for exclusion. 
+For example, assume that you have a topology similar to the one in VSX solution topology overview, the upstream LAGs (LAG 101 and LAG 102), would need to be identified by the linkup-delay-timer exclude lag-list <LAG-LIST> for exclusion before a VSX switch reboot. 
+Periodic synchronization 
+Each VSX node synchronizes every second the following with its VSX peer through ISLP: 
+■ Learned MAC addresses 
+■ LACP states 
+■ STP states 
+In a VSX scenario if all traffic from core to access flows through one switch only, the other device will also learn about ARP/ND from its VSX peer. There is no functional impact to the normal datapath based learning. VSX split and the rejoin scenario, such as periodic synchronization, resumes after the bulk synchronization. 
+The IVRL induced neighbor entries are not synced either through the initial ARP synchronization or periodic synchronization. The local IVRL will induce the learning on each side triggered by either a local data-path ARP learned or the ongoing sync based-ARP learned in the source VRF. If you enter one or more of the following commands on one VSX switch but not on the other VSX switch or any configuration is incorrect on one switch , the ARP entries on both switches will become unsynchronized: 
+■ interface vlan 
+■ shutdown for a VLAN 
+■ no shutdown for a VLAN 
+If you run into this situation, correct the configuration and run the clear arp command, which clears the ARP entries on both VSX nodes. After you run the clear arp command, the ARP entries are synchronized on both switches.
+AOS-CX 10.15.xxxx Virtual Switching Extension (VSX) Guide | (5420, 6400, 8xxx, 9300, 10000 Switch Series) 22 
+The following image shows how periodic synchronization synchronizes LACP states, MAC, ARP/ND, and MSTP. The image references the VSX synchronization between aggregate 1 (the primary VSX switch) and aggregate 2 (the secondary VSX switch). 
+  
+
+BFD and VSX support 
+BFD supports VSX LAG, active gateway, and active forwarding. 
+For 832x series switches: Several TCAMs (ternary content-addressable memory) are used to avoid decreasing the time-to-live (TTL) to 254 on BFD single-hop packets received/sent on ISL interfaces. For 8400 series switches: To account for the TTL decrement on active forwarding, the BFD daemon supports packets with TTL equal to 254 on sessions running on ports with this functionality active.
+Getting started with VSX | 23 
+Chapter 3 
+Upgrading to the latest version of VSX 
+Upgrading to the latest version of VSX 
+This chapter provides information about upgrading customer configurations to the latest version of the Virtual Switching Extension (VSX). 
+■ If you are upgrading from version 10.00, see the Virtual Switching Extension (VSX) Guide for 10.02 for steps on how to upgrade VSX to version 10.02. Then, see the steps in this guide on how to upgrade VSX from version 10.02. 
+■ If you are upgrading from version 10.01/10.02, see the Virtual Switching Extension (VSX) Guide for 10.03 for steps on how to upgrade VSX to version 10.03. Then, see the steps in this guide on how to upgrade VSX from version 10.03. 
+■ If you are upgrading from version 10.03/10.04/10.05, see the Virtual Switching Extension (VSX) Guide for 10.06 for steps on how to upgrade VSX to version 10.06. Then, see the steps in this guide on how to upgrade VSX from version 10.06. 
+■ If you are upgrading from version 10.06/10.07/10.08/10.09, see the Virtual Switching Extension (VSX) Guide for 10.09 for steps on how to upgrade VSX to version 10.10. Then, see the steps in this guide on how to upgrade VSX from version 10.10. 
+■ If you are upgrading from version 10.09/10.10/10.11, see the Virtual Switching Extension (VSX) Guide for 10.02 for steps on how to upgrade VSX to version 10.12. Then, see the steps in this guide on how to upgrade VSX from version 10.12. 
+Upgrading VSX from 10.12 or later to 10.15 
+You can upgrade to the latest version of AOS-CX using one of the following methods: 
+■ Running the vsx update-software command: Follow the steps in Upgrading switches by using the vsx update-software command for required steps before and after running the vsx update-software command. 
+This command downloads new software from the TFTP server and verifies the download. After a successful verification, the command installs the software to the alternative software bank of both the VSX primary and secondary switches. The command then reboots them in sequence, the VSX secondary switch followed by VSX primary switch. For example if a switch has booted with the primary flash memory, then the command will install the software to secondary flash memory. 
+■ Running the vsx update-software boot-bank command: This command upgrades the VSX pairs using the specified boot bank on both the devices. Before running this command, copy the new software by adding the TFTP URL into the software bank of both primary and secondary VSX switches. Use this command in cases where the scheduled maintenance window is minimum or to avoid TFTP server timeout. For more information about this command, see vsx update-software boot-bank. ■ Using REST API : Refer to the latest REST API Guide. 
+To perform an upgrade using REST API, the minimum supported version of AOS-CX must be 10.07 or later.   
+AOS-CX 10.15.xxxx Virtual Switching Extension (VSX) Guide | (5420, 6400, 8xxx, 9300, 10000 Switch Series) 24
+■ Running HPE Aruba Networking NetEdit to upgrade to the latest version of VSX. Refer to the HPE Aruba Networking NetEdit documentation. 
+■ Schedule time not supported for a VSX software upgrade via the REST API. 
+Upgrading switches by using the vsx update-software command Prerequisites 
+1. Ensure that there is a scheduled maintenance window. There will be a minimal disruption of service until the upgrade is completed. 
+2. If you have enabled loop protect, enter the show loop-protect command for verifying that the action on loop detection has a value of TX disable on the VSX interface. If the setting has a different value, reset the value to TX disable by entering the loop-protect action tx-disable command: 
+switch(config)# interface lag 2 multi-chassis 
+switch(config-if)# loop-protect action tx-disable 
+switch(config-if)# exit 
+switch(config)# exit 
+3. The vsx update-software command provides the option to save the configuration on the primary and secondary VSX switches; however, you can save the configuration manually by using one of the following methods: 
+■ To copy the running configuration into the startup configuration: 
+switch# copy running-config startup-config 
+If the startup configuration is already present, the command overwrites the pre-existing startup configuration. 
+■ To copy the running configuration into a checkpoint that has not been created yet: switch# copy running-config checkpoint <CHECKPOINT-NAME> 
+4. Check the status of the show vsx brief command and validate the ISL is in-sync and the keepalive is established. 
+5. Check the output of the show lacp interfaces multi-chassis command and note which LACP interfaces are in a forwarding state of up. 
+Procedure 
+1. Enter the vsx update-software command. Prefix the path, for downloading the software, with tftp://, as shown in the following example: 
+switch# vsx update-software tftp://192.168.1.1/XL.10.0x.xxxx vrf mgmt Do you want to save the current configuration (y/n)? y 
+The running configuration was saved to the startup configuration. 
+This command will download new software to the %s image of both the VSX
+Upgrading to the latest version of VSX | 25 
+primary and secondary systems, then reboot them in sequence. 
+The VSX secondary will reboot first, followed by the primary. 
+Continue (y/n)? y 
+VSX Primary Software Update Status : <VSX primary software update status> 
+VSX Secondary Software Update Status : <VSX secondary software update status> 
+VSX ISL Status : <VSX ISL status> 
+Progress 
+[........................................................................... ..] 
+Secondary VSX system updated completely. Rebooting primary. 
+This command gives you the option to save the running configuration on the primary and secondary VSX switches. After the command saves the running configuration, it downloads new software from the TFTP server and verifies the download. After a successful verification, the command installs the software to the alternative image of both the VSX primary and secondary switches. 
+The command displays the status of the VSX primary and secondary switches during the upgrade. The command also refreshes the progress bar as the image update progresses. Do not interrupt the VSX primary CLI session until the software updates completes; however, software update process can be stopped. If you stop the upgrade when the secondary switch has already installed the image in its flash memory or the secondary switch has started the reboot the process, it comes up with the new software. The primary switch continues to have with older software. You can stop the software update process by pressing ctrl+c. 
+2. Run the show vsx brief command on both switches. Verify that ISL is In-Sync by running the show vsx brief command on both switches. Verify in the output of the command that the keepalive state is Keepalive-Established. 
+3. Validate on both switches that the downstream LACP links are all forwarding correctly by entering the show lacp interfaces command. 
+4. Save the running configuration to the startup configuration: 
+switch# write memory 
+Success
+AOS-CX 10.15.xxxx Virtual Switching Extension (VSX) Guide | (5420, 6400, 8xxx, 9300, 10000 Switch Series) 26 
+Chapter 4 
+Setting up the VSX environment 
+Setting up the VSX environment 
+The following sections describe the steps to set up the VSX environment, configure core 1 and core 2 for VSX, and configure aggregate VSX switches. 
+VSX in the core layer 
+When mobility controllers are attached to the core layer, a VSX LAG must be in the core level. Layer 2 is only at the distribution layer with the core layer being layer 2 and layer 3. This configuration is for IPv6, and the configuration reduces the number of transit VLANs and the associated SVIs for many VRFs. It also minimizes the Shortest Path First (SPF) calculation. The number of fibers is reduced and there is fast failover because of the simplified topology (no square-routing). 
+Figure 1 VSX LAG in the core (recommended) 
+  
+
+The following image shows an example that SPF is slower when VSX is not in the core because of routing convergence. 
+AOS-CX 10.15.xxxx Virtual Switching Extension (VSX) Guide | (5420, 6400, 8xxx, 9300, 10000 Switch Series) 27
+  
+
+Configuring core 1 and core 2 for VSX 
+The steps in this section are for configuring core 1 and core 2 for VSX, as displayed in VSX LAG in the core (recommended). 
+After completing these steps, configure the aggregate switches in your network topology, as described in Configuring the two aggregate VSX switches. Then, enable VSX configuration synchronization for a feature, as described in Enabling VSX configuration synchronization. 
+A VSX LAG supports a maximum of four member links per switch segment. A VSX LAG across a downstream switch can have at most a total of 16 member links. Run the show capacities command for the maximum number of VSX LAGs supported for your type of switch. 
+The core can be third-party devices, as long as they support LACP for downstream connectivity to the VSX LAG. VSX synchronization syncs from the primary switch (aggregate 1) to the secondary switch (aggregate-2). 
+When creating a VSX LAG, select an equal number of member links in each segment for load balancing, such as four member links (one segment) and four member links (another segment). Do not create a VSX LAG with four member links in one switch and two member links on another segment. A switch can have a maximum of four member links.  
+Setting up the VSX environment | 28 
+Procedure 
+1. Access the prompt on the switch you want to make the primary core switch. 2. If the switch lacks a hostname, create one: 
+switch(config)# hostname example_host 
+3. Create the required VLANS: 
+switch(config)# vlan 1-20 
+4. Enable OSPFv2: 
+switch(config)# router ospf 1 
+switch(config-ospf-1)# redistribute connected 
+switch(config-ospf-1)# area 0.0.0.0 
+5. Enable OSPFv3: 
+switch(config)# router ospfv3 1 
+switch(config-ospfv3-1)# redistribute connected 
+switch(config-ospfv3-1)# area 0.0.0.0 
+switch(config-ospfv3-1)# exit 
+OSPFv2 and OSPFv3 are not required to be activated simultaneously. Activate OSPFv2 and OSPFV3 according to the needs of the environment. 
+6. Create a loop back interface and enable OSPFv2/v3: 
+switch(config)# interface loopback 1 
+switch(config-loopback-if)# ip address 3.3.3.3/24 
+switch(config-loopback-if)# ip ospf 1 area 0.0.0.0 
+switch(config-loopback-if)# exit 
+7. Enable OSPFv2/v3 on the physical port: 
+switch(config)# interface 1/2/43 
+switch(config-if)# no shutdown 
+switch(config-if)# ip address 192.168.10.5/24 
+switch(config-if)# ipv6 address 2001:11::3/64 
+switch(config-if)# ip ospf 1 area 0.0.0.0 
+switch(config-if)# ipv6 ospfv3 1 area 0.0.0.0 
+switch(config-if)# exit 
+8. Create a VLAN for the host network: 
+switch(config)# vlan 200 
+switch(config-vlan-200)# interface vlan 200 
+switch(config-if-vlan)# ip address 192.168.10.6/16
+AOS-CX 10.15.xxxx Virtual Switching Extension (VSX) Guide | (5420, 6400, 8xxx, 9300, 10000 Switch Series) 29 
+switch(config-if-vlan)# ipv6 address 2001:200::1/64 
+switch(config-if-vlan)# exit 
+9. Enable the port for host communication: 
+switch(config)# interface 1/1/48 
+switch(config-if)# no shutdown 
+switch(config-if)# no routing 
+switch(config-if)# vlan access 200 
+switch(config-if)# exit 
+10. Enter vsx: 
+switch(config)# vsx 
+switch(config-vsx)# 
+11. Enter the role primary command for assigning the primary role to a switch. If you have already gone through these steps for configuring the primary switch and you are now configuring the secondary switch, enter the role secondary command. 
+Setting the primary role on a switch: 
+switch(config-vsx)# role primary 
+Setting the secondary role on a switch: 
+switch(config-vsx)# role secondary 
+12. Configure a layer 2 interface as an ISL: 
+switch(config-vsx)# inter-switch-link lag 100 
+In this instance, an ISL was configured over LAG 100. 
+Before you enter this command, verify that the interface is layer 2 and the LAG is not a VSX LAG. 
+13. Keepalive helps the core switches continue to stay in synch during an ISL failure. When creating the keepalive path, make sure that the path does not go over the ISL or a VSX LAG. Keepalive can be configure two ways for core 1 and core 2. One way is to enable keepalive between core 1 and core 2 as a direct link. A second way is to create a keepalive path for a loopback interface through the upstream that lacks a VSX LAG. 
+switch(config)# int loopback 0 
+switch(config-loopback-if)# ip address 192.168.1.1/32 
+switch(config-loopback-if)# ip ospf 1 area 0 
+switch(config-loopback-if)# exit 
+switch(config)# vsx 
+switch(config-vsx)# keepalive peer 192.168.1.2 source 192.168.1.1 vrf <KA-
+Setting up the VSX environment | 30 
+VRF-NAME> 
+switch(config-vsx)# exit 
+switch(config)# int loopback 0 
+switch(config-loopback-if)# vrf attach <KA-VRF-NAME> 
+The source of the keepalive interface can be a supported layer 3 interface through the loopback interface, SVI, or layer 3 interface. The source must be reachable to the VSX peer through layer 3. The path can be over the core or direct path. The keepalive path must not be over the ISL. See Recommended network configuration for keepalive. © 
+14. Change the context to the switch(config)# context: 
+switch(config-vsx)# exit 
+switch(config)# 
+15. Configuring a LAG interface as an ISL: 
+switch(config)# interface lag <LAG-ID> 
+For example, configuring LAG 100 as an ISL LAG: 
+switch(config)# interface lag 100 
+switch(config-lag-if)# vsx 
+switch(config-vsx)# inter-switch-link lag 100 
+16. Repeat the previous steps for the secondary core switch. 
+17. Enter the show vsx configuration inter-switch-link command for confirming the properties of the VSX LAG, such as confirming if the ISL is in-sync. 
+switch# show vsx configuration inter-switch-link 
+Inter Switch Link : 1/1/43 
+Hello Interval : 1 Seconds 
+Dead Interval : 20 Seconds 
+Hold Time : 0 Seconds 
+System MAC : 10:00:00:00:00:01 
+Device Role : primary 
+Multichassis LAGs : lag100 
+Configuring the two aggregate VSX switches 
+The steps in this section are for configuring the two aggregate VSX switches, as described in VSX solution topology overview. VSX switches do not automatically have VSX configuration synchronization enabled. After completing the steps in this section, enable VSX configuration synchronization for a feature, as described in VSX configuration synchronization. VSX synchronization sync configuration information from the primary switch (Aggregate-1) to the secondary switch (Aggregate-2). After completing the steps in this section, enable VSX configuration synchronization for a feature, as described in VSX configuration synchronization.
+AOS-CX 10.15.xxxx Virtual Switching Extension (VSX) Guide | (5420, 6400, 8xxx, 9300, 10000 Switch Series) 31 
+A VSX LAG supports a maximum of four member links per switch segment. A VSX LAG across a downstream switch can have at most a total of 16 member links. Run the show capacities command for the maximum number of VSX LAGs supported for your type of switch. 
+■ When creating a VSX LAG, select an equal number of member links in each segment for load balancing, such as four member links (one segment) and four member links (another segment). Do not create a VSX LAG with four member links in one switch and two member links on another segment. A switch can have a maximum of four member links. 
+■ Make sure that the VSX LAG interface on both the VSX primary and secondary switches has a member port configured and enabled. 
+■ Make sure that you also have a non-VSX port that is available for the ISL. 
+Procedure 
+1. Access the prompt on the switch you want to make the primary aggregate switch. 2. If the switch does not have a hostname, create one: 
+switch(config)# hostname <HOSTNAME> 
+3. Create the required VLANS: 
+switch(config)# vlan 1-20 
+4. Create the ISL interface: 
+switch(config)# interface lag 128 
+switch(config-lag-if)# no shutdown 
+switch(config-lag-if)# no routing 
+switch(config-lag-if)# vlan trunk native 1 
+switch(config-lag-if)# lacp mode active 
+When a native VLAN is defined (as shown this example), the switch automatically executes the vlan trunk allowed all command to ensure that the default VLAN is allowed on the trunk. In this example, LAG 128 is being used as the ISL. 
+The same list of VLANs that are trunked over the VSX LAGs must be configured on the primary and secondary VSX switches in the global configuration. The list of VLANs can be synced to the secondary switch if the vsx-sync command is used in the VLAN context. Also verify that the VLAN set is also permitted on the ISL on the primary and secondary VSX switches. To configure VLAN trunking on the ISL, enter the vlan trunk allowed [<VLAN-LIST> | all] command. If a native VLAN is defined, the switch automatically runs the vlan trunk allowed all command to ensure that the default VLAN is allowed on the trunk. To allow only specific VLANs on the trunk, enter the vlan trunk allowed <VLAN-LIST> command, for example: vlan trunk allowed 2,3,4 
+5. Add a physical interface into the LAG: 
+switch(config)# interface 1/4/28 
+switch(config-if)# no shutdown 
+switch(config-if)# lag 128
+Setting up the VSX environment | 32 
+switch(config)# interface 1/4/32 
+switch(config-if)# no shutdown 
+switch(config-if)# lag 128 
+6. Enable the interface for keepalive communication: 
+switch(config)# interface 1/1/5 
+switch(config-if)# ip address 192.168.100.1/24 
+7. Go to the vsx context: 
+switch(config)# vsx 
+switch(config-vsx)# 
+8. Enter the role primary command for assigning the primary role to a switch. If you have already gone through these steps for configuring the primary switch and you are now configuring the secondary switch, enter the role secondary command. 
+Setting the primary role on a switch: 
+switch(config-vsx)# role primary 
+Setting the secondary role on a switch: 
+switch(config-vsx)# role secondary 
+9. Enable ISL: 
+switch(config-vsx)# inter-switch-link lag 128 
+In this example, ISL is being enabled for LAG 128. 
+Before you enter this command, verify that the interface is layer 2 and the LAG is not a VSX LAG. 10. Enable keepalive: 
+switch(config-vsx)# keepalive peer 192.168.100.2 source 192.168.100.1 
+In this example, 192.168.100.2 is the peer IP address and 192.168.100.1 is the source IP address. 11. Enable the multichassis interface: 
+switch(config)# interface lag 1 multi-chassis 
+switch(config-lag-if)# no shutdown 
+switch(config-lag-if)# no routing 
+switch(config-lag-if)# vlan trunk native 1 
+switch(config-lag-if)# vlan trunk allowed 11
+AOS-CX 10.15.xxxx Virtual Switching Extension (VSX) Guide | (5420, 6400, 8xxx, 9300, 10000 Switch Series) 33 
+12. Add physical interfaces into the multichassis interface: 
+switch(config)# interface 1/1/1 
+switch(config-if)# no shutdown 
+switch(config-if)# lag 1 
+13. Create an active gateway SVI: 
+switch(config)# interface vlan 11 
+switch(config-if-vlan)# ip address 192.168.100.5/16 
+switch(config-if-vlan)# ipv6 address 2001:DB8::2/64 
+switch(config-if-vlan)# active-gateway ip 192.168.100.2 mac 
+00:00:00:00:00:01 
+switch(config-if-vlan)# active-gateway ipv6 2001:DB8::3 mac 
+00:00:01:00:00:01 
+14. Enable uplink communication for OSPFv2: 
+switch(config)# router ospf 1 
+switch(config-ospf-1)# redistribute connected 
+switch(config-ospf-1)# area 0.0.0.0 
+The redistribute connected command is optional in this example. See the Command-Line Interface Guide for your switch and software version for more information about the redistribute connected command. 
+15. Enable uplink communication for OSPFv3: 
+switch(config)# router ospfv3 1 
+switch(config-ospfv3-1)# redistribute connected 
+switch(config-ospfv3-1)# area 0.0.0.0 
+The redistribute connected command is optional in this example. See the Command-Line Interface Guide for your switch and software version for more information about the redistribute connected command. 
+16. Create the loopback interface and enable OSPFv2: 
+switch(config)# interface loopback 1 
+switch(config-loopback-if)# ip address 192.168.0.1/32 
+switch(config-loopback-if)# ip ospf 1 area 0.0.0.0 
+17. Enable OSPFv2/v3 on the physical port: 
+switch(config)# interface 1/4/30 
+switch(config-if)# no shutdown 
+switch(config-if)# ip address 192.168.10.0/31 
+switch(config-if)# ipv6 address 2001:11::1/64 
+switch(config-if)# ip ospf 1 area 0.0.0.0 
+switch(config-if)# ipv6 ospfv3 1 area 0.0.0.0
+Setting up the VSX environment | 34 
+18. Repeat the previous steps for the secondary aggregate switch. 
+19. View the running configuration by entering the following on the primary and secondary switches: switch# show running-config 
+20. Verify that the ISL link is in-sync, the role of the switch, and the keepalive state (if enabled) by entering the following on the primary and secondary switches: 
+vsx-primary# show vsx brief 
+ISL State : In-Sync 
+Device State : Peer-Established 
+Keepalive State : Keepalive-Established 
+Device Role : primary 
+Number of Multi-chassis LAG interfaces : 2 
+21. Verify the VSX status by entering the following on the primary and secondary switches: 
+switch# show vsx status 
+VSX Operational State 
+--------------------- 
+ISL channel : In-Sync 
+ISL mgmt channel : operational 
+Config Sync Status : in-sync 
+NAE : peer_reachable 
+HTTPS Server : peer_reachable 
+Attribute Local Peer 
+------------ -------- -------- 
+ISL link 1/1/43 1/1/43 
+ISL version 2 2 
+System MAC 48:0f:cf:af:70:84 48:0f:cf:af:c2:84 
+Platform 8320 8320 
+Software Version 10.0x.xxxx 10.0x.xxxx 
+Device Role primary secondary 
+22. Verify the LACP interface status by entering the following on the primary and secondary switches: switch# show lacp interfaces 
+23. Verify the uplink (layer 3 communication) by entering the following on the primary and secondary switches: 
+switch# show ip ospf neighbors 
+Configuring an AOS-CX switch as an access switch 
+An access switch can be any switch that supports LACP or static link aggregation. The steps in this section are specifically for an AOS-CX switch. For non-AOS-CX switches, refer to the documentation for your switch about how to enable LACP or static link aggregation.
+AOS-CX 10.15.xxxx Virtual Switching Extension (VSX) Guide | (5420, 6400, 8xxx, 9300, 10000 Switch Series) 35 
+Prerequisites 
+These steps assume that you have an AOS-CX switch. 
+Procedure 
+1. If the switch lacks a hostname, create one: 
+switch(config)# hostname <HOSTNAME> 
+For example: 
+switch(config)# hostname Finance01 
+2. Create a VLAN: 
+switch(config)# vlan <VLAN-ID> 
+For example: 
+switch(config)# vlan 11 
+3. Create a LAG: 
+switch(config)# interface lag <ID> 
+For example: 
+switch(config)# interface lag 2 
+4. Enable LACP for the LAG: 
+switch(config-lag-if)# lacp mode active 
+5. Create either an access interface or a trunk interface. You can create both allowed and native trunk interfaces on the access switch. 
+■ To create an access interface: 
+switch(config-lag-if)# vlan access <VLAN_ID> 
+For example: 
+switch(config-lag-if)# vlan access 5
+Setting up the VSX environment | 36 
+■ To create a native trunk interface: 
+a. To create an allowed trunk interface: 
+switch(config-lag-if)# vlan trunk allowed <VLAN_LIST> 
+For example: 
+switch(config-lag-if)# vlan trunk allowed 30,50,120 
+b. To create a native trunk interface: 
+switch(config-lag-if)# vlan trunk native <VLAN_ID> [tag] 
+For example: 
+switch(config-lag-if)# vlan trunk native 30 tag 
+The trunk parameter enables tagging on a native VLAN. Only incoming packets that are tagged with the matching VLAN ID are accepted. Incoming packets that are untagged are dropped except for BPDUs. Egress packets are tagged. 
+6. For multiple access switches in your topology, repeat the previous steps. 7. Verify the configuration: 
+switch# show lacp interfaces
+AOS-CX 10.15.xxxx Virtual Switching Extension (VSX) Guide | (5420, 6400, 8xxx, 9300, 10000 Switch Series) 37 
+Chapter 5 
+Enabling VSX configuration 
+Enabling VSX configuration synchronization 
+VSX configuration synchronization simplifies VSX solution management, reduces configuration misconfiguration and drift across VSX peer switches. With configuration synchronization enabled, the primary peer configuration is synced to the secondary peer. This synchronization is controlled in an opt in manner by enabling VSX synchronization on a section of configuration. 
+VSX configuration synchronization 
+If one or more of the following scenarios occur, the secondary switch will receive the configuration update after it fulfills synchronization requirements and is fully enabled: 
+■ The secondary switch is not currently present. 
+■ The secondary switch is not currently connected to the primary switch through the ISL. ■ The secondary switch is not currently configured for VSX configuration synchronization at the time VSX configuration synchronization is enabled on the primary switch. 
+You can only enable a specific configuration for syncing through the vsx-sync CLI extension on the primary switch. This extension is blocked on the secondary peer switch except when VSX configuration synchronization is disabled or the ISL link is down. 
+Features supporting VSX 
+You can enable VSX synchronization at: 
+■ The global level: See Enabling VSX synchronization at the global level for a listing of features supporting VSX synchronization at the global level. 
+■ The context level: See Enabling VSX synchronization at the context level for a listing of features supporting VSX synchronization at the context level. 
+VSX synchronization requirements 
+■ Software image versions must be the same on both switches. 
+■ The output from the show vsx status command must show in-sync for Config Sync Status. ■ Primary and secondary roles configured. 
+■ An interswitch link must be configured. 
+■ When enabling VSX synchronization under a physical interface, a VLAN interface, or a VSX LAG, create on the secondary switch the physical interface, VLAN interface, or VSX LAG with the same name and routing setting as on the primary switch. For example, if the primary switch has a physical interface of 1/1/1, you must create another physical interface of 1/1/1 on the secondary switch. Also, if the primary VSX switch has routing enabled, the secondary switch must have routing enabled. Once the name and routing information is the same, VSX synchronization synchronizes the additional configuration information from the primary VSX switch to the secondary VSX switch. 
+AOS-CX 10.15.xxxx Virtual Switching Extension (VSX) Guide | (5420, 6400, 8xxx, 9300, 10000 Switch Series) 38
+It is recommended to: 
+■ Enable keepalive for preventing traffic loss during an ISL link failure. 
+■ Assign a common system MAC to prevent traffic loss in cases when the secondary VSX switch is restored before the primary VSX switch. 
+Enabling VSX synchronization at the global level The commands in this table are for enabling VSX synchronization at the global level for a feature. 
+Command 
+Feature AAA 
+for 
+enabling vsx-sync 
+Example 
+configurations, including user, RADIUS server, and TACACS+ 
+server. 
+aaa switch(config)# vsx 
+switch(config-vsx)# vsx-sync aaa
+
+
+vsx-sync 
+Access List Log 
+switch(config)# access-list log timer 30 
+acl-log 
+Timer 
+switch(config)# vsx 
+timer 
+configurations. 
+switch(config-vsx)# vsx-sync acl-log-timer
+	vsx-sync 
+ARP security 
+NOTE: ARP security including dynamic ARP inspection is available on the 
+arp 
+configuration. 
+6400, 8325, 8400, and 10000 Switch Series. 
+security 
+primary_sw(config)# vsx 
+primary_sw(config-vsx)# vsx-sync arp-security 
+primary_sw(config-vsx)# vsx-sync mclag-interfaces
+	vsx-sync 
+BFD 
+bfd-global switch(config)# bfd detect-multiplier 1 
+configurations. 
+switch(config)# bfd min-transmit-interval 1000 
+switch(config)# bfd min-receive-interval 1000 
+switch(config)# bfd echo-src-ip-address 2.2.2.2 
+switch(config)# bfd min-echo-receive-interval 1000 
+switch(config)# vsx 
+switch(config-vsx)# vsx-sync bfd-global
+	vsx-sync 
+BGP 
+bgp switch(config)# ip aspath-list list1 seq 10 
+configurations. 
+permit 10 
+switch(config)# ip community-list expanded com1 
+seq 10 permit 10 
+switch(config)# ip extcommunity-list standard 
+ext1 seq 10 permit rt 10:4
+	
+
+
+
+Enabling VSX configuration synchronization | 39 
+Feature 
+Command for 
+enabling 
+Example 
+switch(config)# ip prefix-list pref1 seq 10 
+permit any 
+switch(config)# route-map rm1 permit 
+switch(config-route-map-rm1-10)# match ip 
+next-hop 1.1.1.1 
+switch(config)# router bgp 100 
+switch(config-bgp)# bgp router-id 1.1.1.1 
+switch(config-bgp)# neighbor 12.1.1.1 
+remote-as 1 
+switch(config-bgp)# address-family ipv4 unicast switch(config-bgp-ipv4-uc)# neighbor 12.1.1.1 activate 
+switch(config)# vsx 
+switch(config-vsx)# vsx-sync bgp 
+NOTE: A VSX synch of BGP neighbors between VSX peers is performed on a best effort basis. Directly connected neighbors will be synced by the NDMD daemon in a VSX environment. Neighbors learned over the VxLAN tunnel or over EVPN are not synched through VSX, and the VTEPs will learn the remote neighbors independently. Traffic loss will not be seen if a neighbor is missing in only the primary or the secondary member.
+
+
+vsx-sync 
+CoPP policy 
+switch(config)# vsx 
+copp 
+configurations. 
+switch(config-vsx)# vsx-sync copp-policy
+policy 
+	vsx-sync 
+DCBx 
+dcb-global switch(config)# lldp dcbx 
+configurations 
+switch(config)# dcbx application iscsi priority 7 
+(8100, 8325, 
+switch(config)# vsx 
+switch(config-vsx)# vsx-sync dcb-global
+8360, 9300, and 
+10000 series 
+switches). 
+	vsx-sync 
+DHCPv4 and 
+dhcp-relay switch(config)# interface 1/1/1 
+DHCPv6 relay 
+switch(config-if)# ip helper-address 192.168.10.1 
+configurations. 
+switch(config-if)# ip helper-address 192.168.20.1 
+switch(config)# interface 1/1/2 
+switch(config-if)# ip helper-address 192.168.30.1 
+switch(config)# dhcp-relay option 82 
+switch(config)# vsx 
+switch(config-vsx)# vsx-sync dhcp-relay
+	vsx-sync 
+DHCPv4 server 
+switch(config)# dhcp-server external-storage 
+dhcp 
+configurations, 
+dhcp-dbs file dhcpv4_lease_file delay 600 
+server 
+including 
+switch(config)# dhcp-server vrf default 
+switch(config-dhcp-server)# pool test 
+external 
+switch(config-dhcp-server-pool)# range 10.0.0.20 
+storage 
+10.0.0.30
+configurations. 
+	
+
+
+
+AOS-CX 10.15.xxxx Virtual Switching Extension (VSX) Guide | (5420, 6400, 8xxx, 9300, 10000 Switch Series) 40 
+Feature 
+Command for 
+enabling 
+Example 
+switch(config-dhcp-server-pool)# default-router 10.0.0.1 10.0.0.10 
+switch(config-dhcp-server-pool)# static-bind ip 10.0.0.1 mac 24:be:05:24:75:73 
+switch(config)# vsx 
+switch(config-vsx)# vsx-sync dhcp-server
+
+
+vsx-sync 
+DHCPv6 server 
+switch(config)# dhcpv6-server external-storage 
+dhcpv6- 
+configurations, 
+dhcpv6-dbs file dhcpv6_lease_file delay 600 
+server 
+including 
+switch(config)# dhcp-server vrf default 
+switch(config-dhcp-server)# pool test 
+external 
+switch(config-dhcpv6-server-pool)# range 2001::1 
+storage 
+2001::10 prefix-len 64 
+configurations. 
+switch(config-dhcpv6-server-pool)# option 22 
+ipv6 2001::12 
+switch(config-dhcpv6-server-pool)# static-bind 
+ipv6 2001::11 client-id 1:0:a0:24:ab:fb:9c 
+switch(config)# vsx 
+switch(config-vsx)# vsx-sync dhcpv6-server
+	vsx-sync 
+DNS 
+dns switch(config)# vsx 
+configurations. 
+switch(config-vsx)# vsx-sync dns
+	vsx-sync 
+EVPN 
+evpn switch(config)# vlan 2 
+configurations. 
+switch(config-vlan-2)# vsx-sync 
+switch(config)# evpn 
+switch(config-evpn)# vlan 2 
+switch(config-evpn-vlan-2)# rd 5:5 
+switch(config-evpn-vlan-2)# route-target 
+export 1:1 
+switch(config-evpn-vlan-2)# route-target 
+import 1:1 
+switch(config)# vsx 
+switch(config-vsx)# vsx-sync evpn
+	vsx-sync 
+Global classifier 
+switch(config)# apply policy testPolicy in 
+policy 
+policy 
+switch(config)# vsx 
+global 
+configurations. 
+switch(config-vsx)# vsx-sync policy-global
+	vsx-sync 
+IP ICMP 
+icmp-tcp switch(config)# vsx 
+configurations. 
+switch(config-vsx)# vsx-sync icmp-tcp
+	vsx-sync 
+LLDP 
+lldp switch(config)# lldp reinit 6 
+configurations. 
+switch(config)# vsx
+	
+
+
+
+Enabling VSX configuration synchronization | 41 
+Feature 
+Command for 
+enabling 
+Example 
+switch(config-vsx)# vsx-sync lldp
+
+
+vsx-sync 
+Loop protect 
+switch(config)# loop-protect transmit 
+loop 
+configurations, 
+interval 10 
+protect 
+such as 
+switch(config)# loop-protect re-enable-timer 
+globall 
+300 
+transmit 
+switch(config)# vsx 
+interval and re 
+switch(config-vsx)# vsx-sync loop-protect-global
+enable-timer. 
+	vsx-sync 
+MAC lockout 
+switch(config)# mac-lockout 10:10:10:10:10:10 
+mac 
+configurations. 
+switch(config)# vsx 
+lockout 
+switch(config-vsx)# vsx-sync mac-lockout
+	vsx-sync 
+ND snooping 
+switch(config)# vsx 
+nd 
+configurations. 
+switch(config-vsx)# vsx-sync nd-snooping
+snooping 
+	vsx-sync 
+OSPF 
+ospf switch(config)# router ospf 1 
+configurations. 
+switch(config-ospf-1)# area 0 
+switch(config-ospf-1)# area 1 nssa 
+switch(config-ospf-1)# area 2 stub 
+switch(config-ospf-1)# redistribute connected 
+route-map map1 
+switch(config)# router ospfv3 1 
+switch(config-ospfv3-1)# max-metric router 
+lsa on-startup 
+switch(config-ospfv3-1)# bfd all-interfaces 
+switch(config-if)# ip ospf 1 area 0 
+switch(config-if)# ip ospf hello-interval 33 
+switch(config-if)# ipv6 ospfv3 1 area 0 
+switch(config-if)# ipv6 ospfv3 dead 
+interval 55 
+switch(config)# vsx 
+switch(config-vsx)# vsx-sync ospf
+	Port-access 
+vsx-sync 
+switch(config-vsx)# vsx-sync port-access 
+configuration. 
+port 
+switch(config)# vsx-sync mclag-interfaces 
+access 
+switch(config)# port-access lldp-group l1 
+switch(config-lldp-group)# match sysname 6405 
+switch(config-lldp-group)# exit 
+switch(config)# port-access role r1 
+switch(config-pa-role)# private-vlan port-type 
+secondary 
+switch(config-pa-role)# exit 
+switch(config)# port-access device-profile dp1 
+switch(config-device-profile)# enable 
+switch(config-device-profile)# associate role r1
+	
+
+
+
+AOS-CX 10.15.xxxx Virtual Switching Extension (VSX) Guide | (5420, 6400, 8xxx, 9300, 10000 Switch Series) 42 
+Feature 
+Command for 
+enabling 
+Example 
+switch(config-device-profile)# associate lldp-group l1
+
+
+vsx-sync 
+QoS 
+qos-global switch(config)# vsx 
+Configurations, 
+switch(config-vsx)# vsx-sync qos-global
+such as CoS 
+map, DSCP 
+map, and trust 
+policy. 
+	vsx-sync 
+Route map 
+route-map switch(config)# ip aspath-list list1 seq 10 
+configurations. 
+permit 10 
+switch(config)# ip community-list expanded 
+com1 seq 10 permit 10 
+switch(config)# ip extcommunity-list standard 
+ext1 seq 10 permit rt 10:4 
+switch(config)# ip prefix-list pref1 seq 10 
+permit any 
+switch(config)# route-map rm1 permit 
+switch(config-route-map-rm1-10)# match ip 
+next-hop 1.1.1.1 
+switch(config)# vsx 
+switch(config-vsx)# vsx-sync route-map
+	vsx-sync 
+Static neighbor 
+neighbor DUT-1(config-vsx)# show run in vlan127 
+configurations. 
+interface vlan127 
+ip address 137.1.1.1/16 
+ipv6 address 7f00::1/64 
+arp ipv4 137.1.1.35 mac 
+00:12:01:00:00:1a 
+arp ipv4 137.1.1.70 mac 
+00:12:01:00:00:3d 
+exit 
+DUT-1(config-vsx)# 
+switch(config)# vsx 
+switch(config-vsx)# vsx-sync neighbor
+	vsx-sync 
+sFlow 
+sflow switch(config)# vsx 
+configurations. 
+switch(config-vsx)# vsx-sync sflow
+	vsx-sync 
+sFlow global 
+switch(config)# sflow collector 1.1.1.1 
+sflow 
+configurations. 
+switch(config)# vsx 
+global 
+switch(config-vsx)# vsx-sync sflow-global
+	
+
+
+
+Enabling VSX configuration synchronization | 43 
+Feature SNMP 
+Command for 
+enabling vsx-sync 
+Example 
+configurations. 
+snmp switch(config)# vsx 
+switch(config-vsx)# vsx-sync snmp
+
+
+vsx-sync 
+SSH 
+ssh switch(config)# vsx 
+configurations. 
+switch(config-vsx)# vsx-sync ssh
+	Static routes. vsx-sync 
+switch(config)# vsx 
+static 
+switch(config-vsx)# vsx-sync static-routes
+routes 
+	vsx-sync 
+STP 
+stp-global switch(config)# spanning-tree config-name 
+configurations. 
+abc 
+switch(config)# spanning-tree config 
+revision 1 
+switch(config)# vsx 
+switch(config-vsx)# vsx-sync stp-global
+	vsx-sync 
+Time-related 
+time switch(config)# vsx 
+configurations, 
+switch(config-vsx)# vsx-sync time
+including NTP 
+and time zone 
+configurations. 
+	vsx-sync 
+UDP forwarder 
+switch(config)# vsx 
+upd 
+configurations. 
+switch(config-vsx)# vsx-sync upd-forwarder
+forwarder 
+	vsx-sync 
+VRF 
+vrf switch(config)# vsx 
+configurations. 
+switch(config-vsx)# vsx-sync vrf
+	vsx-sync 
+VSX 
+vsx-global switch(config)# vsx 
+configurations: 
+switch(config-vsx)# inter-switch-link dead 
+■ ISL: 
+interval 15 
+switch(config-vsx)# inter-switch-link hello 
+o Dead 
+interval 2 
+interval. 
+switch(config-vsx)# inter-switch-link hold 
+time 1 
+o Hello 
+switch(config-vsx)# vsx-sync vsx-global
+interval. 
+o Hold time. 
+o Peer 
+detect 
+interval. 
+■ Keepalive: 
+	
+
+
+
+AOS-CX 10.15.xxxx Virtual Switching Extension (VSX) Guide | (5420, 6400, 8xxx, 9300, 10000 Switch Series) 44 
+Feature 
+o Dead 
+interval. 
+o Hellow 
+interval. 
+o UDP port number. 
+■ The delay time setting for the link 
+up delay 
+timer. 
+■ The split recovery 
+setting. 
+■ The system MAC 
+address. 
+Command for 
+enabling 
+Example 
+
+
+vsx-sync 
+VSX LAG 
+switch(config)# vsx 
+mclag 
+interfaces. 
+switch(config-vsx)# vsx-sync mclag-interfaces
+interfaces 
+	vsx-sync 
+VRRP 
+vrrp switch(config)# router vrrp enable 
+configurations. 
+switch(config-if)# vrrp 1 address-family ipv4 
+switch(config-if-vrrp)# address 1.1.1.100 
+primary 
+switch(config-if-vrrp)# timers advertise 1000 
+switch(config-if-vrrp)# no shutdown 
+switch(config-if)# vrr 1 address-family ipv6 
+switch(config)# vsx 
+switch(config-vsx)# vsx-sync vrrp
+	
+
+
+
+Enabling VSX synchronization at the context level 
+The commands in this table are for enabling VSX synchronization at the context level, such as for an access list, an interface, or a LAG. 
+When enabling VSX synchronization under a physical interface, a VLAN interface, or a VSX LAG, create on the secondary switch the physical interface, VLAN interface, or VSX LAG with the same name and routing setting as on the primary switch. For example, if the primary switch has a physical interface of 1/1/1, you must create another physical interface of 1/1/1 on the secondary switch. Also, if the primary VSX switch has routing enabled, the secondary switch must have routing enabled. Once the name and routing information is the same, VSX synchronization synchronizes the additional configuration information from the primary VSX switch to the secondary VSX switch.
+Enabling VSX configuration synchronization | 45 
+Feature Command 
+for enabling Example 
+Access lists associated with interface or LAG. 
+vsx-sync access lists 
+Enabling VSX synchronization for access lists associated with interface 1/1/1: 
+switch(config)# interface 1/1/1 
+switch(config-if)# vsx-sync access-lists 
+Enabling VSX synchronization for access lists under interface LAG 2: 
+switch(config)# interface lag 2 
+switch(config-lag-if)# vsx-sync access-lists 
+switch(config-lag-if)# apply access-list ip test1 in
+
+
+An access list 
+vsx-syncswitch(config)# access-list ip ITBoston 
+context. 
+switch(config-acl-ip)# vsx-sync
+	One or more 
+vsx-sync 
+Enabling VSX sync for active gateways under interface VLAN 5: 
+active 
+active 
+Enter on the primary switch: 
+gateways 
+gateways 
+associated 
+with an 
+switch(config)# interface vlan 5 
+interface. 
+switch(config-if-vlan)# vsx-sync active-gateways 
+Enter on the secondary switch: 
+switch(config)# interface vlan 5
+	A class 
+vsx-syncswitch(config)# class ip ITHouston 
+context. 
+switch(config-class-ip)# vsx-sync
+	A policy 
+vsx-syncswitch(config)# policy ITPaloAlto 
+context. 
+switch(config-policy)# vsx-sync
+	An IRDP 
+vsx-sync 
+irdp switch(config)# interface 1/1/1 
+association 
+switch(config-if)# ip irdp 
+under an 
+switch(config-if)# ip irdp minadvertinterval 550 
+interface 
+switch(config-if)# ip irdp maxadvertinterval 850 
+enabled for 
+switch(config-if)# ip irdp holdtime 900 
+syncing. 
+switch(config-if)# vsx-sync irdp
+	QoS 
+vsx-sync 
+Enabling VSX synchronization for QoS associations under interface 1/1/5: 
+associated 
+qos 
+with an 
+interface or 
+switch(config)# interface 1/1/5 
+LAG. 
+switch(config-if)# vsx-sync qos
+	
+
+
+
+AOS-CX 10.15.xxxx Virtual Switching Extension (VSX) Guide | (5420, 6400, 8xxx, 9300, 10000 Switch Series) 46 
+Feature Command 
+for enabling Example 
+Enabling VSX synchronization for QoS under interface LAG 3: 
+switch(config)# interface lag 3 
+switch(config-lag-if)# vsx-sync qos
+A QoS queue 
+vsx-syncswitch(config)# qos queue-profile qprofile1 
+profile. 
+switch(config-queue)# vsx-sync 
+switch(config-queue)# map queue 0 local-priority 7 
+switch(config-queue)# map queue 1 local-priority 6 
+switch(config-queue)# map queue 2 local-priority 5 
+switch(config-queue)# map queue 3 local-priority 4 
+switch(config-queue)# map queue 4 local-priority 3 
+switch(config-queue)# map queue 5 local-priority 2 
+switch(config-queue)# map queue 6 local-priority 1 
+switch(config-queue)# map queue 7 local-priority 0
+	A QoS 
+vsx-syncswitch(config)# qos schedule-profile sprofile1 
+schedule 
+switch(config-schedule)# vsx-sync 
+profile. 
+switch(config-schedule)# dwrr queue 0 weight 1 
+switch(config-schedule)# dwrr queue 1 weight 10 
+switch(config-schedule)# dwrr queue 2 weight 20 
+switch(config-schedule)# dwrr queue 3 weight 30 
+switch(config-schedule)# dwrr queue 4 weight 40 
+switch(config-schedule)# dwrr queue 5 weight 50 
+switch(config-schedule)# dwrr queue 6 weight 60 
+switch(config-schedule)# dwrr queue 7 weight 70
+	Port filters 
+vsx-sync 
+portfilter switch(config)# interface 1/1/1 
+under an 
+switch(config-if)# vsx-sync portfilter 
+interface. 
+switch(config)# interface lag 1 
+switch(config-lag-if)# vsx-sync portfilter
+	Policies under 
+vsx-sync 
+Enabling VSX sync for policies under interface VLAN 5: 
+an interface. 
+policies 
+Enter on the primary switch: 
+switch(config)# interface vlan 5 
+switch(config-if-vlan)# vsx-sync policies 
+Enter on the secondary switch: 
+switch(config)# interface vlan 5
+	PVLAN port vsx-sync Enabling VSX sync for PVLAN port type configuration:
+	
+
+
+
+Enabling VSX configuration synchronization | 47 
+Feature Command 
+for enabling Example 
+type 
+configuration under an 
+interface 
+enabled for syncing. 
+private vlan port type 
+switch(config)# interface lag 8 
+switch(config-lag-if)# vsx-sync private-vlan port type 
+
+
+Rate limits 
+vsx-sync 
+Enabling VSX synchronization for rate limits with interface 1/1/1: 
+associated 
+rate-limits 
+with interface 
+or LAG. 
+switch(config)# interface 1/1/1 
+switch(config-if)# vsx-sync rate-limits 
+Enabling VSX synchronization for rate limits under interface LAG 3: 
+switch(config)# interface lag 3 
+switch(config-lag-if)# vsx-sync rate-limits
+	VLANs 
+vsx-sync 
+vlans switch(config)# interface 1/1/1 
+association 
+switch(config-if)# vsx-sync vlans
+under an 
+interface 
+enabled for 
+syncing. 
+	VSX active 
+vsx active 
+forwarding switch# interface vlan 3 
+forwarding for 
+switch(config-if-vlan)# vsx active-forwarding 
+an interface 
+switch(config-vsx)#
+VLAN. 
+	
+
+
+
+Enabling VSX synchronization of STP configurations between VSX peer switches 
+Prerequisites 
+■ The VSX switches support several STP modes, such as MSTP and RPVST. Confirm that these STP configurations are identical on the VSX switches. 
+■ You must be in the global configuration context: switch(config)#. 
+Procedure 
+1. Enter: 
+switch(config)# vsx 
+switch(config-vsx)# vsx-sync stp-global
+AOS-CX 10.15.xxxx Virtual Switching Extension (VSX) Guide | (5420, 6400, 8xxx, 9300, 10000 Switch Series) 48 
+2. Enter: 
+switch(config-vsx)# vsx-sync vsx-global 
+3. Enter: 
+switch(config-vsx)# vsx-sync mclag-interfaces
+Enabling VSX configuration synchronization | 49 
+Chapter 6 
+Monitoring the VSX environment 
+Monitoring the VSX environment 
+Ways to view the status of VSX 
+You view the status of VSX by multiple techniques: 
+■ From the web UI: See the VSX page topic in the Introduction to the Web UI Guide. ■ From the REST API: See the REST API Guide. 
+■ From the CLI: See VSX commands. 
+Consistency checking between VSX switches 
+Use the following commands to verify that all configurations are in-sync between VSX switches. These commands are helpful in troubleshooting configuration mismatches across VSX peer switches. 
+Task Command 
+Displaying the VSX global configuration consistency between two VSX switches. Use this command to troubleshoot configuration mismatches across VSX peer switches. 
+show vsx config-consistency 
+
+
+Displaying VSX LACP configuration consistency between two VSX 
+show vsx config-consistency lacp 
+switches. Use this command to troubleshoot configuration 
+[<LAG-NAME>]
+mismatches across VSX peer switches. 
+	
+
+
+
+Viewing the show commands for both VSX switches from one switch 
+You can view the outputs of the show command for the primary and secondary VSX switches from one switch. When you enter a show command with the vsx-peer parameter, the command displays the output from the peer device. 
+For example, the following command was entered on the primary switch. The vsx-peer parameter indicates to the software to display the output as if the command was entered on the secondary switch. 
+switch# show vsx status vsx-peer 
+VSX Operational State 
+--------------------- 
+ISL channel : In-Sync 
+ISL mgmt channel : operational 
+Config Sync Status : in-sync 
+NAE : peer_reachable 
+HTTPS Server : peer_reachable 
+Attribute Local Peer 
+------------ -------- -------- 
+AOS-CX 10.15.xxxx Virtual Switching Extension (VSX) Guide | (5420, 6400, 8xxx, 9300, 10000 Switch Series) 50
+ISL link lag1 lag1 
+ISL version 2 2 
+System MAC e0:07:1b:cb:72:e4 98:f2:b3:68:79:2e 
+Platform 8320 8320 
+Software Version 10.0x.xxxx 10.0x.xxxx 
+Device Role secondary primary 
+The show commands that display the file system contents, such as show logging or show core-dump, do not support the vsx-peer parameter. 
+If the switches lack the VSX configuration or the ISL is down, the output from the VSX peer switch is not displayed.
+Monitoring the VSX environment | 51 
+Chapter 7 
+Preventing traffic loss 
+Preventing traffic loss 
+The following section describes strategies for preventing traffic loss. 
+Link-up delay 
+When a VSX device is rebooted, it has no entries for MAC, ARP, routes. If downstream VSX LAG ports are activated before the information is relearned, traffic is dropped. To avoid a traffic drop, VSX LAGs on the rebooted device stay down until the restore of LACP, MAC, ARP, and MSTP databases. 
+The learning process has two phases: 
+■ Initial synchronization phase: 
+o This phase is the download phase where the rebooted node learns all the LACP+MAC+ARP+STP database entries from its VSX peer through ISLP. 
+o The initial synchronization timer, which is not configurable, is the required time to download the database information from the peer. 
+■ Link-up delay phase: 
+o This phase is the duration for: 
+● Installing the downloaded entries to the ASIC. 
+● Establishing router adjacencies with core nodes and learning upstream routes. 
+o The link-up delay timer default value is 180 seconds. 
+o Depending on the network size, ARP/routing tables size, you might be required to set the timer to a higher value (maximum 600 seconds). 
+When both VSX devices reboot, the link-up delay timer is not used. 
+To get upstream router adjacencies established during the link-up delay, the upstream LAG (for example LAG 101) has to be excluded from the scope of the link-up delay. Even if the upstream VSX node is not excluded from the link-up delay timer, OSPFv2/OSPFv3 neighborship forms, when active-forwarding is enabled on a VLAN. While the link-up delay timer is running, all SVIs that contain VSX LAG members are kept in a pseudo-shutdown state. 
+AOS-CX 10.15.xxxx Virtual Switching Extension (VSX) Guide | (5420, 6400, 8xxx, 9300, 10000 Switch Series) 52
+
+The link-up delay timer during an ISL failure 
+Configure the link-up delay timer and exclude LAGs so that if an ISL goes down, the downed ISL does not impact the state of the VLAN, and its SVI that is not a part of a VSX LAG. This SVI is part of at least one orphan port (besides the ISL LAG which is not a VSX LAG). 
+The following scenario explains what happens: 
+■ During the ISL going down (before the initial synchronization): As long as the secondary VSX node has a port that is a member of a VSX LAG, the associated SVI of the VLAN (transported by the VSX LAG) turns to OFF/SHUT on the VSX secondary node. This situation occurs regardless of orphan ports carrying the given VLAN. 
+■ During the running of the link-up delay timer (after the initial synchronization): As long as the secondary VSX node has a port that is a member of a VSX LAG, the associated SVI of the VLAN (transported by the VSX LAG) turns to OFF/SHUT on the VSX secondary node. This situation occurs regardless of orphan ports carrying the given VLAN. 
+The associated SVI of the VLAN transported by VSX LAG restores to ON/UP on the VSX secondary node, only if the following two conditions are met:
+Preventing traffic loss | 53 
+o The VSX LAG is excluded from the link-up delay timer by the following command: linkup-delay-timer exclude lag-list 
+o The given VLAN is not allowed on a VSX LAG that is not in the part of the exclusion set. 
+The following example shows how a network was configured so an SVI that was not part of a VSX LAG (SVI 16 in this case) was restored. This example also shows the link-up delay timer and the exclusion of LAGs. 
+The network in the following example was configured as: 
+■ VLAN 16 is set on 1/1/5 (access). 
+■ VLAN 10 tagged as VSX LAG 11. * 
+■ LAG 1 is not a VSX LAG.* 
+■ LAG 2 and LAG 11 are VSX LAGs. 
+*This information is not accessible from the following example. 
+switch# show vlan 10 
+------------------------------------------------------------------------------- VLAN Name Status Reason Type Interfaces 
+------------------------------------------------------------------------------- 10 test_vlan10 up ok static 1/1/7,lag1-lag2,lag11- lag12, 
+lag14,lag16,lag112 
+switch# show vlan 15 
+------------------------------------------------------------------------------- VLAN Name Status Reason Type Interfaces 
+------------------------------------------------------------------------------- 15 ZTP_VLAN up ok static lag1-lag2 
+switch# show vlan 16 
+------------------------------------------------------------------------------- VLAN Name Status Reason Type Interfaces 
+------------------------------------------------------------------------------- 16 VLAN16 up ok static 1/1/5,lag1 
+switch# show vlan 200 
+------------------------------------------------------------------------------- VLAN Name Status Reason Type Interfaces 
+------------------------------------------------------------------------------- 200 interco_vlan up ok static lag1-lag2 
+switch# show run vsx 
+vsx 
+system-mac 00:00:00:01:01:01 
+inter-switch-link lag 1 
+role secondary 
+keepalive peer 192.168.10.1 source 192.168.10.2 vrf KeepAlive 
+linkup-delay-timer exclude lag 2 
+linkup-delay-timer 60 
+switch# show vsx status linkup-delay 
+Configured linkup delay-timer : 60 seconds 
+Initial sync status : Completed 
+Delay timer status : Running
+AOS-CX 10.15.xxxx Virtual Switching Extension (VSX) Guide | (5420, 6400, 8xxx, 9300, 10000 Switch Series) 54 
+Linkup Delay time l : 0 minutes 58 seconds 
+Interfaces that will be brought up after 
+delay timer expires : lag11-lag12,lag14,lag16,lag112 Interfaces that are excluded from delay 
+timer : lag2 
+switch# show int vlan10 
+Interface vlan10 is down 
+Admin state is up 
+Description: 
+Hardware: Ethernet, MAC Address: 94:f1:28:1d:ad:00 
+IPv4 address 10.10.10.3/26 
+active gateway 10.10.10.1 00:00:00:00:11:01 
+active gateway 2002:0a0a:0a00::1 00:00:00:00:66:01 
+switch# sh int vlan15 
+Interface vlan15 is up 
+Admin state is up 
+Description: 
+Hardware: Ethernet, MAC Address: 94:f1:28:1d:ad:00 
+IPv4 address 10.10.15.12/24 
+switch# sh int vlan16 
+Interface vlan16 is up 
+Admin state is up 
+Description: 
+Hardware: Ethernet, MAC Address: 94:f1:28:1d:ad:00 
+IPv4 address 10.10.16.2/24 
+switch# sh int vlan200 
+Interface vlan200 is up 
+Admin state is up 
+Description: 
+Hardware: Ethernet, MAC Address: 94:f1:28:1d:ad:00 
+IPv4 address 10.10.212.6/29 
+As expected, SVI 10 is in pseudo-shut during the link-up delay. SVI 10 was a part of LAG 2 which is in exclusion. SVI 16 is up, as expected because SVI 16 was not part of a VSX LAG. 
+Split brain scenario 
+A split brain scenario occurs when both keepalive and the ISL is down, as shown in the follow figure. When the ISL is restored, there is no reboot of the secondary switch. If split recovery is enabled (the default setting), the secondary VSX LAGs are brought up after the time set by the linkup-delay-timer command.
+Preventing traffic loss | 55 
+
+Keepalive 
+Keepalive is a layer 3 interface that is used to exchange heartbeats between VSX peer switches. The heartbeats are exchanged by using the User Datagram Protocol (UDP) and port 7678 (default). During an ISL failure, VSX switches use their keepalive connection to determine if both VSX switches are up and running. This configuration helps the VSX switches find alternative paths to the ISL link in the network so the two VSX switch can continue to stay in-sync. 
+Configure each VSX peer switch with a keepalive connection to the other VSX peer switch. This connection is established over a routed network (IPv4 currently) and is not required to be a dedicated peer-to-peer link unlike ISL. Keepalive packets are UDP-based. 
+Make sure that the VSX peer switches have layer 3 reachability for keepalive interfaces through directly connected interfaces or routed through the upstream layer 3 network. Source of keepalive interfaces can be a layer 3 interface (router port), a loopback interface, or a Switch Virtual Interface (SVI). An SVI is a logical layer 3 interface configured per VLAN (one-to-one mapping) that performs all layer 3 processing for packets to or from all switch ports associated with that VLAN.
+AOS-CX 10.15.xxxx Virtual Switching Extension (VSX) Guide | (5420, 6400, 8xxx, 9300, 10000 Switch Series) 56 
+With respect to the keepalive path, it is highly recommended to separate keepalive traffic from the ISL link. 
+Use a dedicated layer 3 link and as a best practice, also use a dedicated VRF, as shown in Recommended network configuration for keepalive. 
+Keepalive packets can be sourced from the supported layer 3 interface; however, the packet must not be transported over the ISL. 
+In the case of 6400 and 8400 switch series, it highly recommended to use keepalive and ISL on different line cards. A single point of failure on line card that has keepalive and ISL configuration might cause split brain. 
+Keepalive response in ISL failure scenarios 
+■ ISL link is down but the switches are still up and running: In this case, VSX switches use their keepalive connection to determine that they are both up and running. Once that is determined, the user-configured primary VSX switch keeps its multichassis (VSX) LAG links up and the secondary VSX switch forces its VSX LAG links to go down with the appropriate reason. Once the ISL link is up, the MAC and ARP tables of the primary switch are synchronized to the secondary switch. Then, the configured delay timer starts. Once the delay timer expires, the secondary VSX switch brings up its VSX LAG links. 
+■ ISL link and one of the VSX switches is down: The running switch sees that the ISL and keepalive connection are both down. Independent of the user configured role (primary or secondary), the switch that is up continues to keep its VSX LAG links up. Subsequently when the peer switch returns, the ISL link comes up first. Then, the returned VSX peer switch synchronizes its MAC and ARP tables from the peer switch that stayed up. After the synchronization completes, the delay time starts. Once the delay timer expires, the VSX peer switch brings up its VSX LAG links. 
+Keepalive scenario 
+The following diagram illustrates a scenario in which both VSX switches are up, but the ISL link is down. The switches cannot exchange information. 
+The keepalive functionality brings down the link between Switch B and Switch C in the following diagram. The traffic is forced to go from Switch C to Switch A and then through the Layer 3 network to access Switch B. The keepalive path is over the Layer 3 network. Traffic traveling from Switch B to Switch A is also forced to go through the Layer 3 network.
+Preventing traffic loss | 57 
+Figure 1 Keepalive topology 
+
+Do not have the keepalive path go over ISL. Use a direct-link connection for keepalive. If the keepalive path uses ISL as its only path and an ISL link failure occurs, the VSX switches would be out of sync without the keepalive functioning. 
+Keepalive configurations 
+Task Command Example 
+Configuring keepalive peer source and VRF. 
+keepalive peer <IP-ADDR> source <IP-ADDR> [<VRF NAME>] 
+switch(config-vsx)# keepalive peer 192.168.1.1 source 192.168.1.5 vrf vrf1
+
+
+Unconfiguring keepalive. no keepalive switch(config-vsx)# no keepalive
+	Configuring keepalive UDP 
+keepalive udp-port 
+switch(config-vsx)# keepalive 
+port. 
+<PORT-NUM> 
+udp-port 2000
+	
+
+
+
+AOS-CX 10.15.xxxx Virtual Switching Extension (VSX) Guide | (5420, 6400, 8xxx, 9300, 10000 Switch Series) 58 
+Task Command Example 
+Restoring default keepalive UDP port. 
+no keepalive udp-port switch(config-vsx)# no keepalive udp-port 
+
+
+Configuring keepalive hello 
+keepalive hello-interval 
+switch(config-vsx)# keepalive 
+interval. 
+<HELLO-INTERVAL> 
+hello-interval 3
+	Restoring default keepalive 
+no keepalive hello 
+switch(config-vsx)# no keepalive 
+hello interval. 
+interval 
+hello-interval
+	Configuring keepalive dead 
+keepalive dead-interval 
+switch(config-vsx)# keepalive 
+interval. 
+<DEAD-INTERVAL> 
+dead-interval 10
+	Restoring default keepalive 
+no keepalive dead 
+switch(config-vsx)# no keepalive 
+dead interval. 
+interval 
+dead-interval
+	
+
+
+
+Default values: 
+■ Keepalive dead interval: 3 seconds 
+■ Hello interval: 1 second 
+■ UDP port for the keepalive protocol: 7678 
+Recommended network configuration for keepalive 
+Directly connect the keepalive link, as shown in the following figure. Avoid keepalive communication over the ISL circuits.
+Preventing traffic loss | 59 
+Figure 1 Recommended configuration for keepalive 
+
+Do not configure keepalive to go through the VSX LAG uplinks, as shown in the following image. This scenario is not supported because: 
+■ VSX LAG on the secondary will clear because split detection. 
+■ Keepalive communication will stop between the VSX switches.
+AOS-CX 10.15.xxxx Virtual Switching Extension (VSX) Guide | (5420, 6400, 8xxx, 9300, 10000 Switch Series) 60 
+Figure 2 Not supported configuration for keepalive 
+
+Active gateway and active forwarding 
+Active-active layer 2 
+VSX LAGs span two switches and operate in active-active mode. Traffic between the access layer and aggregation layer switches can be forwarded to any of the active links. There are no loops and no need for spanning tree protocol or blocked ports. 
+From a datapath perspective, each VSX switch that gets a packet always uses its local links of the LAG to forward traffic to the destination. The VSX switch only uses the ISL link if the local LAG links are down. 
+Layer 2 configuration
+Preventing traffic loss | 61 
+Network diagram showing active-active layer 2 configuration. Agg1 and Agg2 are shown along with the local links of the LAG to forward traffic to the destination. 
+The following shows the configuration details from the figure: 
+interface lag 11 multi-chassis 
+description access-sw1 
+no shutdown 
+no routing 
+vlan trunk native 1 
+vlan trunk allowed 5,10,15,20 
+lacp mode active 
+interface lag 12 multi-chassis 
+description access-sw2 
+no shutdown 
+no routing 
+vlan trunk native 1 
+vlan trunk allowed 5,10,15,20 
+lacp mode active 
+interface 1/1/1 
+no shutdown 
+lag 11 
+interface 1/1/2 
+no shutdown 
+lag 12 
+Active-active layer 3 default gateway 
+VSX aggregation switches can be configured with a shared virtual IP (VIP) and a shared virtual MAC address (VMAC) on the layer 3 VLAN interface. 
+The VIP/VMAC serves as the default gateway for the access layer. The two switches then share the router MAC and function as an active-active gateway for the IP subnet. The first VSX device that receives traffic from the access layer (based on the hashing algorithm over the LAG interface) routes it across to the other subnets. 
+Active gateway over VSX
+AOS-CX 10.15.xxxx Virtual Switching Extension (VSX) Guide | (5420, 6400, 8xxx, 9300, 10000 Switch Series) 62 
+Active gateway is a first hop redundancy protocol that eliminates a single point of failure. The active gateway feature is used to increase the availability of the default gateway servicing hosts on the same subnet. An active gateway improves the reliability and performance of the host network by enabling a virtual router to act as the default gateway for that network. 
+If you have enabled active gateway, VRRP is not required. Active gateway is similar to VRRP in that routed traffic from the VSX node is sourced from the switch interface MAC and not the virtual MAC address (VMAC). Each active gateway sends a periodic broadcast hello packet to avoid VMAC aging on the access switches. The switch views the active gateway IP as a self IP address. Active gateway is preferable over VRRP because with VRRP traffic is still pushed over the ISL link, resulting in latency in the network. 
+VMACs and active gateway 
+There can be only one virtual MAC address (VMAC) each for IPv4 and IP6, and the VIP and VMAC must be the same on both VSX switches. 
+You can have a maximum of 16 different VMACs per VSX pair. You can configure the same VMAC for both IPv4 and IPv6. For example: You can have a maximum of eight VMACs for IPv4, simultaneously having a maximum of eight VMACs for IPv6. 
+Only 15 VMACs are supported on 6400 switch series. 
+If a VMAC is different for IPv4 and IPv6, the switch creates two different interfaces, one for IPv4 and another for IPv6: 
+interface vlan2 
+active-gateway ip mac 0a:0b:0c:0d:0e:0e 
+active-gateway ipv6 mac 00:00:00:00:00:01 
+0020a0b0c0d0e0eLink encap:Ethernet HWaddr 0A:0B:0C:0D:0E:0E 
+002000000000001Link encap:Ethernet HWaddr 00:00:00:00:00:01 
+If a VMAC is the same for IPv4 and IPv6, only one kernel interface is created for both IPv4 and IPv6: 
+interface vlan3 
+active-gateway ip mac 00:00:00:00:00:01 
+active-gateway ipv6 mac 00:00:00:00:00:01 
+003000000000001Link encap:Ethernet HWaddr 00:00:00:00:00:01 
+Do not use peer system MAC address as an active-gateway VMAC. If same MAC address is used, the VSX synchronization will try to sync the configuration on secondary switch and cause traffic disruptions. 
+Requirements 
+■ Before configuring active gateway, confirm that an IP address is on the SVI that is in the same subnet as the active gateway IP you are trying to configure. If an active gateway IP does not have an SVI IP with the same subnet, the CLI allows the configuration, but the active gateway IP will not be programmed in the kernel, resulting the active gateway to be unreachable.
+Preventing traffic loss | 63 
+■ An active gateway can be configured only over an SVI. If active gateway and SVI IP addresses are the same, make sure that SVI IP addresses are consistent across VSX switches. If you have a VSX square topology that contains two pairs of VSX switches, make sure that you do not have the same IP address across all four VSX nodes in the square topology. 
+■ Active gateway configuration must be the same in both the VSX peer switches. ■ Having same VMAC and different active gateway IP addresses on different VSX segments in a square topology is not supported. Ensure that you have either same VMAC and same active gateway IP addresses or different VMAC and different active gateway IP addresses configured on two different VSX segments. For 8320, 8325, 9300, and 10000 switch series, when VMAC and active gateway IP addresses are same, make sure that the SVI status is identical on both the VSX segments. ■ If a system has active forwarding enabled, reduce one VMAC from the total number of VMACs supported in the system. An active gateway can have a maximum of 14 "unique" MAC addresses per system, both IPv4 and IPv6 addresses are included in the count. 
+■ If a system has active forwarding disabled, an active gateway can have a maximum of 16 "unique" MAC addresses per system, both IPv4 and IPv6 addresses are included in the count. ■ With IP multinetting, a maximum of 32 IPv4 active gateway and a maximum of 31 IPv6 active gateway can be configured. A recommended configuration is a multidimension scale (MD) scale and a maximum network limit, along with four IPv4 active gateways and four IPv6 active gateways per SVIs with a maximum of 512 SVIs per chassis. An MD scale is when the VSX active-gateway along with other supported features, such as layer 2, layer 3, and multi-VRF are enabled and the system response/stability is validated against them. 
+■ Link local IPv6 virtual IP address of an active gateway address is multicasted for router advertisement so that the IPv6 address can be chosen as a default gateway. 
+■ Active gateway configuration must be the same in both the VSX peer switches. ■ Disable IP ICMP redirect when IP multinetting is enabled. 
+■ Disable ICMP redirect when routing is enabled through an active gateway SVI where egress port belongs to same VLAN as ingress. 
+Example of IPv4 and IPv6 active gateways on an SVI 
+Assume that you have IPv4 and IPv6 active gateways on an SVI. Each SVI uses a MAC address for IPv4 and one for IPv6. The configuration of the VSX with an active-gateway consumes a second MAC address per SVI. 
+switch# sh int vlan10 
+Interface vlan10 is up 
+Admin state is up 
+Description: ACCESS switch mgmt 
+Hardware: Ethernet, MAC Address: 98:f2:b3:68:71:fe 
+IPv4 address 10.1.1.253/24 
+Rx L3: 0 packets, 0 bytes 
+Tx L3: 0 packets, 0 bytes 
+switch# sh run int vlan141 
+interface vlan141 
+description USER VLAN 10.141.0.0/16 
+ip address 10.141.255.253/16 
+ip ospf 1 area 0.0.0.0 
+ip pim-sparse enable 
+ip igmp enable 
+ip igmp version 2
+AOS-CX 10.15.xxxx Virtual Switching Extension (VSX) Guide | (5420, 6400, 8xxx, 9300, 10000 Switch Series) 64 
+exit 
+switch# config 
+switch(config)# int vlan10 
+switch(config-if-vlan)# active-gateway ip 10.1.1.254 mac 00:00:00:10:11:12 switch# sh int vlan10 
+Interface vlan10 is up 
+Admin state is up 
+Description: ACCESS switch mgmt 
+Hardware: Ethernet, MAC Address: 98:f2:b3:68:71:fe 
+IPv4 address 10.1.1.253/24 
+active gateway 10.1.1.254 00:00:00:10:11:12 
+Rx L3: 0 packets, 0 bytes 
+Tx L3: 0 packets, 0 bytes 
+Interface vlan10 is up 
+Admin state is up 
+Description: ACCESS switch mgmt 
+Hardware: Ethernet, MAC Address: 98:f2:b3:68:71:fe 
+IPv4 address 10.1.1.253/24 
+active gateway 10.1.1.254 00:00:00:10:11:12 
+Rx L3: 0 packets, 0 bytes 
+Tx L3: 0 packets, 0 bytes 
+IP multinetting over VSX 
+IP multinetting is the assignment of more than one IP interface to a single VLAN that is used to enable a router to provide default gateway service to different address ranges associated with a single VLAN. When using IP multinetting in an environment with VSX enabled, you must configure multiple active gateway IP addresses per SVI so that you can reach multiple networks on the same VLAN. Make sure that you configure an IP address for either the primary or secondary VSX switch on the SVI with the same subnet. 
+The maximum number of supported active gateways per switch is 4,000. Since a maximum of 31 secondary IPv4 addresses can be configured on an SVI, 32 IPv4 active gateways (along with the primary IPv4 address) can be configured per SVI with IP multinetting support. This support is also the same for IPv6 addresses. 
+Disable IP ICMP redirect when IP multinetting is enabled. 
+Multiple active gateways IP addresses can be programmed on the same active gateway kernel interface, as shown in the following example: 
+interface vlan3 
+ip address 10.0.0.1/24 
+ip address 20.0.0.1/24 secondary 
+active-gateway ip mac 00:00:00:00:00:01 
+active-gateway ip 10.0.0.3 
+active-gateway ip 20.0.0.3 
+003000000000001@vlan3: <NO-CARRIER,BROADCAST,UP,M-DOWN> mtu 1500 qdisc noqueue state LOWERLAYERDOWN group default qlen 1000 
+link/ether 00:00:00:00:00:01 brd ff:ff:ff:ff:ff:ff 
+inet 10.0.0.3/32 scope global 003000000000001
+Preventing traffic loss | 65 
+valid_lft forever preferred_lft forever inet 20.0.0.3/32 scope global 003000000000001 valid_lft forever preferred_lft forever 
+Active gateway VMAC and VIPs can be configured separately: 
+interface vlan3 
+ip address 10.0.0.1/24 
+ip address 20.0.0.1/24 secondary 
+active-gateway ip mac 00:00:00:00:00:01 active-gateway ip 10.0.0.3 
+active-gateway ip 20.0.0.3 
+Active gateway configurations 
+Task Comma 
+nd Example 
+Configuring a virtual 
+IPv4 and 
+IPv6 
+address for an interface VLAN. 
+active gateway {ip | 
+ipv6} 
+[<IP 
+ADDRESS> ] 
+[mac 
+<MAC 
+ADDRESS> ] 
+switch(config)# vlan 2 
+switch(config)# interface vlan 2 
+switch(config-if-vlan)# ip address 10.0.0.1/24 switch(config-if-vlan)# active-gateway ip 10.0.0.2 mac 00:00:00:00:00:01 
+switch(config-if-vlan)# ipv6 address aa:bb::cc:dd/24 switch(config-if-vlan)# active-gateway ipv6 2001:DB8::/32 mac 00:00:00:01:00:01 
+
+
+Unconfiguri 
+no 
+switch(config-if-vlan)# no active-gateway ip
+ng active 
+active 
+gateway for 
+gateway 
+active 
+{ip | 
+active 
+ipv6} 
+routing. 
+[<IP 
+ADDRESS> 
+] 
+[mac 
+<MAC 
+ADDRESS> 
+] 
+	
+
+
+
+See IP multinetting over VSX for additional examples of IP multinetting. 
+VRRP with VSX configuration 
+VRRP is similar to active gateway in that it is a first hop redundancy protocol that eliminates a single point of failure. One VSX switch acts as a VRRP Active router and the other switch acts as the VRRP Standby. Both VSX switches route the traffic. The active gateway/VRRP configuration must be consistent across the two VSX switches.
+AOS-CX 10.15.xxxx Virtual Switching Extension (VSX) Guide | (5420, 6400, 8xxx, 9300, 10000 Switch Series) 66 
+Although active gateway and VRRP are no longer globally exclusive in a VSX configuration, active gateway and VRRP are still exclusive on an SVI. A workaround is to configure VRRP on one SVI (SVI A), and configure active-gateway on the other SVI (SVI B). 
+Active gateway is preferable to VRRP because VRRP traffic is still pushed over the ISL link, resulting in latency. 
+Sample VRRP configuration 
+IPV4: 
+switch(config)# vlan 1-10 
+switch(config)# router vrrp enable 
+switch(config)# interface vlan2 
+switch(config-if-vlan)# ip address 192.168.1.253/16 
+switch(config-if-vlan)# no shutdown 
+switch(config-if-vlan)# vrrp 1 address-family ipv4 
+switch(config-if-vrrp)# address 192.168.1.253 primary 
+switch(config-if-vrrp)# no shutdown 
+switch(config-if-vrrp)# exit 
+switch(config-if-vlan)# exit 
+switch(config)# 
+IPV4 and IPV6: 
+switch(config)# vlan 1-10 
+switch(config)# router vrrp enable 
+switch(config)# interface vlan3 
+switch(config-if-vlan)# ip address 172.3.0.1/16 
+switch(config-if-vlan)# ipv6 address 2002:3::1/64 
+switch(config-if-vlan)# ip ospf 1 area 0.0.0.0 
+switch(config-if-vlan)# ipv6 ospfv3 1 area 0.0.0.0 
+switch(config-if-vlan)# vrrp 1 address-family ipv4 
+switch(config-if-vrrp)# address 172.3.0.10 primary 
+switch(config-if-vrrp)# no shutdown 
+switch(config-if-vrrp)# exit 
+switch(config-if-vlan)# vrrp 1 address-family ipv4 
+switch(config-if-vrrp)# address fe80::3 primary 
+switch(config-if-vrrp)# no shutdown 
+switch(config-if-vrrp)# exit 
+switch(config)# 
+Active forwarding 
+Active forwarding is an optimization for layer 3 unicast traffic flowing from the upstream (core) to the downstream (access) through the VSX peers (aggregate). Active forwarding prevents the bridged traffic from switching over the ISL. It also minimizes latency and the ISL bandwidth. 
+Active forwarding requirements 
+■ Active forwarding is enabled on a SVI facing core network on a VSX environment. ■ Active forwarding is supported on SVI only. 
+■ Active forwarding and active gateway are mutually exclusive features. You cannot enable both active forwarding and active gateway on the same SVI. 
+■ Although the CLI itself does not limit the number of active forwarding SVIs; the maximum number of configured active forwarding SVIs is 256.
+Preventing traffic loss | 67 
+■ Active forwarding is supported on more than one SVI per VRF. 
+■ Active forwarding cannot be configured when ICMP redirect is enabled. 
+Traffic flow scenario 
+Active forwarding mitigates the suboptimal path scenarios because of undeterministic layer 3 hashing and layer 2 hashing, as described in the following ECMP (equal-cost multi-path routing) scenario. This scenario describes a situation when active forwarding is not used. In a VSX environment, a core network is connected to a VSX pair, forming an OSPF adjacency over a VSX LAG. The VSX LAG has ECMP routes to the access network. The core has ECMP routes to choose between either the VSX primary switch or the VSX secondary switch for traffic flowing from the core to the access network. Assume that ECMP picked the VSX primary switch. This traffic is now subjected to the hashing algorithm over the VSX LAG interface. Based on the chosen hashing algorithm, the layer 2 interface might route the traffic to the VSX secondary switch. The secondary VSX switch then bridges this traffic over the ISL to the primary VSX switch. The primary VSX switch in turn routes the traffic toward the access network, which causes extra overhead with ISL bandwidth and network latency. 
+If active forwarding was enabled in the previous scenario, the traffic destined for the access network would not be bridged over the ISL. The traffic would flow from north to south instead, resulting in less network latency. For more information about the benefits of active forwarding, along with a diagram, see Benefits of active forwarding and active gateway. 
+Sample Active forwarding configuration 
+Primary# configure terminal 
+Primary(config)# no ip icmp redirect 
+Primary(config)# interface vlan 1000 
+Primary(config-if-vlan)# vsx active-forwarding 
+Primary(config-if-vlan)# end 
+Deployment options for upstream connectivity with active-active forwarding Aggregate core links can be configured in one of the following ways: 
+■ Layer 3-LAG/routed ports: Simple VLAN-free configuration best suited when the network runs on a single VRF domain. With multiple VRFs in the network, one would need multiple routed ports, one per VRF. 
+■ P2P SVI links: Each aggregate-core link is on its own VLAN. The layer 2 links can carry traffic for multiple SVIs and therefore multiple VRFs can be carried over the same link. 
+■ VSX multichassis LAGs: The aggregate-core links can be multichassis layer 2 links carrying traffic for multiple SVIs and VRFs. This configuration provides for layer 2 LAG and layer 3 ECMP-based active active forwarding for traffic from core to access. 
+In these configurations, the two VSX switches run as independent control planes (OSPF/BGP) and present themselves as different routers in the network. In the datapath however, they function as a single router and support active-active forwarding. 
+Benefits of active forwarding and active gateway 
+The enabling of active forwarding and active gateway reduces latency in the network by bypassing the ISL link for north-south and south-north traffic, resulting in one less hop.
+AOS-CX 10.15.xxxx Virtual Switching Extension (VSX) Guide | (5420, 6400, 8xxx, 9300, 10000 Switch Series) 68 
+When active forwarding is enabled, the north-south unicast traffic bypasses the ISL link for Agg1 and Agg2. Just as the south-north traffic bypasses the ISL link for Agg1 and Agg2 when active gateway is enabled, as shown in the following figure. 
+Figure 1 Active Forwardng and Active Gateway example 
+
+Virtual active gateway 
+A virtual active gateway is created by configuring the same IPv4 address in both the interface-VLAN context and the active-gateway context. 
+Virtual active gateway enables the user to configure the same IPv4 address as both the interface VLAN (SVIs) address as well as the active gateway address. A virtual active gateway is useful when the primary purpose of the SVI is to provide just a first hop gateway service to its clients and does not need a separate set of IPv4 addresses on each device and a virtual IPv4 address to serve the gateway functionality. 
+Supported services on a virtual active gateway SVI 
+■ DHCP Relay 
+■ ARP 
+■ VRF 
+■ ACLs 
+■ Dual stack (IPv6 requires active gateway to have different real and virtual IP addresses).
+Preventing traffic loss | 69 
+■ IPv6 Active GW (with real SVI IPv6) 
+■ VSX Active-GW multinet for IP 
+Unsupported services for a virtual active gateway SVI 
+■ Layer 3 IP Services, such as OSPF, BGP, IGMP, and BFD. 
+■ DHCP Option 82 
+■ PING from the VSX device to downstream clients with SRC IP as the active gateway IP. ■ IPv6 virtual active gateway 
+Sample virtual active gateway configuration 
+A virtual active gateway configuration is created in this example and shown in the following figure. 
+switch(config)# vlan 3 
+switch(config-vlan-3)# interface vlan 3 
+switch(config-if-vlan)# ip address 10.0.0.2/24 
+switch(config-if-vlan)# active-gateway ip 10.0.0.3 mac 00:00:00:00:aa:aa 
+See the Command-Line Interface Guide for your switch and software version for more information about the CLI commands.
+AOS-CX 10.15.xxxx Virtual Switching Extension (VSX) Guide | (5420, 6400, 8xxx, 9300, 10000 Switch Series) 70 
+
+Active-standby DHCP relay 
+When VSX synchronization is enabled for DHCP relay, only the primary VSX node relays DHCP requests tothe upstream DHCP server. The secondary VSX node forwards over the ISL to the primary VSX switch theDHCP requests received from the downstream endpoints. The secondary VSX switch takes over DHCP-relayservice upon primary failure detection (ISL down and keepalive down). Upstream DHCP servers receive asingle DHCP request. Downstream clients receive a single DHCP offer. For more information, refer to vsx-sync dhcp-relay 
+DHCP relay failure if the SVI is down on the primary switch 
+Only the primary VSX node relays DHCP requests to the upstream DHCP server. Shutting down the associated SVI on the primary VSX node prevents any DHCP requests to be relayed. For more information, refer to vsx-sync dhcp-relay 
+Split recovery mode
+Preventing traffic loss | 71 
+Split recovery mode prevents traffic loss when the ISL goes out-of-sync and keepalive subsequently fails. When the ISL goes out-of-sync and keepalive is established, the secondary VSX LAGs are brought down. If keepalive then also fails, this situation causes a split condition. In this case, if split recovery mode is enabled, the secondary switch restores its VSX LAGs so they are up. The secondary VSX node brings up the VSX LAGs after 10 keepalive packets are missed, approximately 10 seconds after keepalive goes down. 
+The no split recovery command disables split recovery mode. When split recovery mode is disabled during a split condition, the secondary switch keeps it VSX LAGs down. 
+VSX shutdown-on-split 
+VSX shutdown-on-split method prevents traffic loss by shutting down the non-VSX interfaces on the VSX secondary when the ISL goes down or when the switch reboots. When the ISL goes down, all the secondary VSX links are brought down but the non-VSX interfaces on the secondary switch will stay up. In this scenario, if firewall, any active links, or single homed devices are connected to the secondary switch, then the traffic is sent to secondary links since non-VSX interfaces are up. This situation causes a traffic drop at the secondary device. To avoid the traffic disruption, you can shut down the non VSX interfaces using the vsx shutdown-on-split command when the ISL goes out-of-sync. This makes the link between the firewall and secondary to go down. For more information, see vsx shutdown-on split. 
+IGMP snooping 
+VSX switches can be configured for IGMP snooping on downstream VLANs facing the access switches. When enabled, the IGMP group database is independently constructed on each VSX switch. Multicast traffic to these groups is appropriately pruned/optimized. 
+Each VSX switch has an identical IGMP group database: 
+■ Each VSX node individually learns any JOIN/LEAVE message received from a downstream VSX LAG. For example: Agg-1 learns on downlink from SW1, whereas Agg-2 learns on the ISL as the ISL is always included as a forwarding port for IGMP, as shown in the following figure. 
+■ The VSX IGMP process translates the received IGMP from the ISL into an IGMP join message from the VSX LAG. 
+Multicast traffic to these IGMP groups is pruned/forwarded based on the individual IGMP group database on each VSX node. ISLP does not synchronize IGMP groups between VSX peers. The IGMP database construction is a data-plane based process. 
+If a VSX node reboots, it must relearn all the IGMP groups. The VSX switch floods multicast traffic within the VLANs that have active physical ports being forwarded. It then sends an All Hosts Query message. When the VSX node receives all join messages, it relearns and recreates the IGMP groups database.
+AOS-CX 10.15.xxxx Virtual Switching Extension (VSX) Guide | (5420, 6400, 8xxx, 9300, 10000 Switch Series) 72 
+
+DHCP relay backup 
+When the two VSX switches are configured for DHCP relay on their VLAN interfaces, only the primary switch actively relays DHCP client requests to the upstream server. The secondary switch acts as a backup. If the primary VSX switch goes down, the secondary switch takes over, such in the case with ISL and keepalive both down. Even though both primary and secondary switches receive the DHCP request, the primary switch takes precedence. 
+The secondary VSX node forwards over the ISL to the primary VSX switch the DHCP requests received from the downstream endpoints. The upstream DHCP servers receive a single DHCP request. The downstream clients receive a single DHCP offer. 
+Both devices do not end up relaying DHCP requests to the server as duplicates. That scenario is usually the case with typical aggregation switches running VRRP-based redundancy. 
+If SVI is disabled on the primary VSX node and the primary goes down, the secondary switch will not take over and no DHCP requests will be relayed.
+Preventing traffic loss | 73 
+IP multicast routing 
+Multicast PIM routing provides fast failover. For each VSX downstream VLAN, both VSX switches as a PIM Designate Router (DR). One node is the actual DR, the other node is the proxy DR. From the PIM protocol view point (join, prune, register. The role of the proxy DR is equal to the role of the actual DR. The proxy DR also sends PIM join messages to the upstream PIM router. Any VSX node receives a copy of IGMP join on the SL. Both the DR and proxy DR maintain the same multicast tables and build the shortest path tree. 
+The proxy DR does not route traffic to downstream nodes. The proxy DR only acts as a bridge, all mroute entries present in the DB for downstream VLAN is being set as bridge entries in the proxy DR ASIC, for example pointing to the DR VSX node. Only the actual DR performs multicast routing and forward traffic destined to groups to its downstream VLANs in the data-path. There is no PIM asset mechanism as PIM forwarder is the DR. 
+DR/Proxy DR election is done per VLAN. Election process is first DR priority, then the highest IP address. 
+Multicast PIM routing is enabled through the active-active command. For example: switch(config)# router pim 
+switch(config-pim)# active-active 
+See the Command-Line Interface Guide for your switch model and software version for more information about the active-active command.
+AOS-CX 10.15.xxxx Virtual Switching Extension (VSX) Guide | (5420, 6400, 8xxx, 9300, 10000 Switch Series) 74 
+
+Recommended values for system MAC and active gateway VMAC 
+It is highly recommended to use unicast MAC Address when assigning system-mac or active-gateway virtual MAC address. There are four ranges reserved for private use of unicast. The values are: 
+■ x2-xx-xx-xx-xx-xx 
+■ x6-xx-xx-xx-xx-xx 
+■ xA-xx-xx-xx-xx-xx 
+■ xE-xx-xx-xx-xx-xx 
+x can be any hexadecimal value.
+Preventing traffic loss | 75 
+Function System-mac Active gateway Virtual MAC Access 02:00:00:00:XX:00 12:00:00:00:XX:0Y 
+Aggregation 02:01:00:00:XX:00 12:01:00:00:XX:0Y
+	Core 02:02:00:00:XX:00 12:02:00:00:XX:0Y
+	
+
+
+
+In the above table, XX represents the unique cluster ID in the function and Y represents the virtual MAC ID (0 to F). 
+Do not use multicast and broadcast MAC address as system-mac address.
+AOS-CX 10.15.xxxx Virtual Switching Extension (VSX) Guide | (5420, 6400, 8xxx, 9300, 10000 Switch Series) 76 
+Chapter 8 
+STP over VSX 
+STP over VSX 
+Without a spanning tree, having more than one active path between a pair of nodes causes loops in the network, which can result in duplication of messages, leading to a “broadcast storm” that can bring down the network. STP ensures that only one active path exists between any two nodes in a spanning tree instance. A spanning tree instance comprises a unique set of VLANs, and belongs to a specific spanning tree region. A region can comprise multiple spanning tree instances (each with a different set of VLANs), and allows one active path among regions in a network. 
+Spanning-tree guards and filters are not allowed for configuration on the ISL. 
+Supported STP modes 
+The VSX switches support the following spanning tree protocols (STPs) with VSX: 
+■ MSTP: Multiple Spanning Tree Protocol. 
+■ RPVST: Rapid per-VLAN Spanning Tree Protocol. 
+How STP works with VSX 
+Both VSX switches appear as a single common Spanning Tree Bridge ID to STP partner devices upstream and downstream that participate to the same Spanning Tree domain. STP can be enabled on VSX switches and any nonrouting ports. Both VSX LAGs and non-VSX LAGs can participate in STP topology to avoid any loops. 
+STP on VSX uses the same bridge ID with the same MAC address on VSX LAGs and non-VSX LAGs, orphan ports. This MAC address is referred to as a common Bridge ID which consists of Spanning Tree priority and the switch MAC Address. The STP port state is the same for VSX LAG ports in VSX peer switches. The Spanning Tree protocol runs independently on VSX nodes, which conforms to the dual-control plane VSX architecture. The primary VSX node is responsible to run the protocol for the VSX LAGs. In the normal state, the primary is "operational primary" and the secondary is "operational secondary". If a primary VSX node failure occurs, the secondary VSX node becomes the STP operational primary. When the primary VSX node goes back up, it takes back ownership of the STP operational primary role. On VSX LAG ports, STP runs only from the operational primary, shown in the following figure. The operational secondary, also shown in the following figure, holds precomputed STP information for ready-state switch over thanks to STP states synchronization. The operational primary does STP state synchronization to the operational secondary for links member of the VSX LAG. That happens as a part of the initial sync (LACP, MAC, ARP, MSTP). During the switch-over, the new operational primary sends the BPDU downstream or upstream within 6 seconds (the default) of the spanning tree BPDU failure detection timer: 3x hello-timer (2s per default). 
+ISL is always part of STP, nonblocking and it sends and receives BPDUs. 
+AOS-CX 10.15.xxxx Virtual Switching Extension (VSX) Guide | (5420, 6400, 8xxx, 9300, 10000 Switch Series) 77
+■ Do not use the same system STP address for the other nodes. For the internal Spanning Tree protocol between VSX nodes, the Bridge_ID of the primary and secondary VSX nodes are derived from (-1, +1) from the system-mac <MAC-ADDR> command. For example, if the system MAC address is 00:00:00:00:00:10, then the other system MAC addresses cannot be 00:00:00:00:00:09, 00:00:00:00:00:10, and 00:00:00:00:00:11. 
+■ You must have identical STP configurations on the primary and secondary VSX switches. ■ It is recommended to have common system MAC addresses configured under the VSX context for stable STP convergence and stability. 
+Figure 1 Sample MST on VSX configuration 
+This figure shows MSTP with a VSX configuration showing BID1 ports as blocking. For more information, see system-mac. 
+MSTP
+STP over VSX | 78 
+MSTP configurations 
+VSX at the distribution layer with MSTP enabled 
+In the following figure, the VSX pair is configured as a root switch. All the ports of the VSX LAGs, non-VSX LAGs, and orphan ports are in a forwarding state. Bridge Protocol Data Units (BPDUs), generated by a VSX pair, are the same on all ports, including VSX LAG, non-VSX LAG, and orphan. All switches must be in the same MSTP region consisting of the same configuration name and revision number, as set by the spanning-tree config-name <CONFIG-NAME> and spanning-tree config-revision <REVISION NUMBER> commands. 
+Switches in the multiple MSTP region consist of different configuration name and revision number. The following example is the extract of MSTP multiple region configuration: 
+VSX switch 
+Primary# configure terminal 
+Primary(config)# spanning-tree config-name mstp1 
+Primary(config)# spanning-tree config-revision 1 
+Non-VSX switch 
+Core# configure terminal 
+Core(config)# spanning-tree config-name mstp2 
+Core(config)# spanning-tree config-revision 2 
+The configuration should be similar on both VSX primary and secondary switches. 
+Table 1: Definitions of the abbreviations used in the figures provided in this topic 
+Abbreviation Definition 
+AB Alternate blocking; the port is in a blocked state. 
+DF Designated forwarding; the port is in a forwarding state.
+	RF Root forwarding; the port is in a forwarding state.
+	
+
+
+
+See Sample configurations for MSTP on VSX for the configuration for the topologies displayed in the figures in this topic.
+AOS-CX 10.15.xxxx Virtual Switching Extension (VSX) Guide | (5420, 6400, 8xxx, 9300, 10000 Switch Series) 79 
+Figure 1 MSTP VSX pair as a root switch 
+
+In the following figure, the VSX pair is not a root switch for STP topology. One of the VSX LAG ports is in the blocking state for resolving an L2 network loop. The VSX LAG port is in a blocking state on both VSX peer switches.
+STP over VSX | 80
